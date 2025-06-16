@@ -1,23 +1,65 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
+node_modules/
+feishu-webhook-server/node_modules/
 
-# testing
-/coverage
+# environment
+.env
+feishu-webhook-server/.env
 
-# production
-/build
+# logs
+*.log
+logs/
+feishu-webhook-server/logs/
+
+# backups
+backups/
+feishu-webhook-server/backups/
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# temp
+*.tmp
+*.temp
+
+# build
+dist/
+build/
+
+# cache
+.cache/
+.npm/
+.yarn/
+
+# testing
+coverage/
+
+# database
+*.sqlite
+*.db
+
+# csv
+*_backup_*.csv
+
+# Local Netlify folder
+.netlify

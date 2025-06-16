@@ -1,5 +1,7 @@
 .App {
-  text-align: center;
+  width: 100%;
+  height: 100vh;
+  position: relative;
 }
 
 .App-logo {
@@ -35,4 +37,1081 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 登录界面样式 */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/2/1/2');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.login-box {
+  width: 350px;
+  padding: 30px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  text-align: center;
+}
+
+/* Logo样式 */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo-image {
+  height: 120px;
+  width: auto;
+}
+
+.login-box h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.login-box p {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.username-input,
+.password-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.username-input:focus,
+.password-input:focus {
+  border-color: #4285f4;
+}
+
+.password-error {
+  color: #d32f2f;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #3367d6;
+}
+
+/* 地图样式 */
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 处理高缩放级别 */
+.leaflet-container {
+  background: transparent !important;
+}
+
+/* 隐藏瓦片加载失败时的消息 */
+.leaflet-container .leaflet-tile-pane {
+  opacity: 1 !important;
+}
+
+.leaflet-container .leaflet-tile-pane .leaflet-tile-container img {
+  background-color: transparent !important;
+  image-rendering: -webkit-optimize-contrast; /* 提高图片清晰度 */
+}
+
+/* 确保街道标签总是在顶部 */
+.leaflet-container .leaflet-marker-pane {
+  z-index: 900 !important;
+}
+
+.leaflet-container .leaflet-overlay-pane {
+  z-index: 1000 !important;
+}
+
+/* 消除瓦片边缘 */
+.leaflet-tile {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+}
+
+.loading, .error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 24px;
+  background-color: #f5f5f5;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+/* 颜色统计面板样式 - 旧版本可能不需要 */
+.color-stats-container {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* 控制面板样式 */
+.control-panel {
+  position: fixed;
+  right: 10px;
+  bottom: 25px;
+  z-index: 1000;
+}
+
+/* 按钮组容器 */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* 统一按钮样式 */
+.control-button {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(0,0,0,0.2);
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.control-button:hover {
+  background-color: #f4f4f4;
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 自动刷新按钮样式 */
+.refresh-button {
+  position: relative;
+}
+
+.refresh-button.active {
+  background-color: #4CAF50 !important;
+  color: white;
+}
+
+.refresh-button.inactive {
+  background-color: #9E9E9E !important;
+  color: white;
+}
+
+.refresh-button .update-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #FF5722;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+.location-button.locating {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.color-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.color-stats-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.color-stats-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+  color: #666;
+}
+
+.color-filter-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 5px;
+}
+
+.color-filter-action {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.color-filter-action:hover:not(:disabled) {
+  background: #f4f4f4;
+}
+
+.color-filter-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 颜色统计列表样式 */
+.color-stats-list {
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+  padding: 0 5px;
+}
+
+.color-stats-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.color-stats-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.color-stats-list::-webkit-scrollbar-track {
+  background-color: #f5f5f5;
+}
+
+.color-stat-item {
+  margin: 4px 0;
+  padding: 2px 0;
+}
+
+.color-stat-item label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 5px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: inline-block;
+}
+
+.brand-name {
+  flex-grow: 1;
+  margin-left: 3px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-count {
+  margin-left: 3px;
+  font-weight: bold;
+  min-width: 15px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.color-stat-item input[type="checkbox"] {
+  margin-right: 4px;
+  transform: scale(0.9);
+}
+
+.color-stats-footer {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 错误提示样式 */
+.location-error {
+  position: absolute;
+  bottom: 46px;
+  right: 0;
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #d9534f;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 地图属性信息样式 */
+.leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  z-index: 999 !important;
+  margin-bottom: 0 !important;
+  padding: 0 5px !important;
+  font-size: 10px !important;
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  .control-button {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+
+  /* 增加触摸区域 */
+  .leaflet-marker-icon,
+  .leaflet-interactive {
+    cursor: pointer !important;
+    touch-action: manipulation;
+  }
+
+  /* 增强标记点的可点击性 */
+  .leaflet-marker-pane svg,
+  .leaflet-marker-pane img {
+    cursor: pointer !important;
+    touch-action: manipulation;
+  }
+
+  /* 确保弹出框按钮更容易点击 */
+  .leaflet-popup-close-button {
+    padding: 8px !important;
+    font-size: 18px !important;
+    line-height: 14px !important;
+    height: 30px !important;
+    width: 30px !important;
+  }
+
+  /* 确保复制按钮更容易点击 */
+  .copy-button {
+    padding: 6px 10px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+  }
+
+  .color-stats-panel {
+    min-width: 240px;
+    max-width: 300px;
+    padding: 12px;
+    right: 50px;
+  }
+
+  .color-stats-header h3 {
+    font-size: 15px;
+  }
+
+  .color-filter-action {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .color-checkbox-label {
+    font-size: 13px;
+  }
+
+  .color-dot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .color-stats-total {
+    font-size: 13px;
+  }
+
+  .location-error {
+    font-size: 11px;
+    padding: 4px 8px;
+    bottom: 50px;
+  }
+}
+
+/* 确保在较小屏幕上也能完整显示 */
+@media (max-height: 600px) {
+  .color-stats-panel {
+    bottom: auto;
+    top: 10px;
+  }
+}
+
+/* 隐藏 Leaflet 默认控件 */
+.leaflet-control-layers {
+  display: none !important;
+}
+
+/* 自定义总部标记样式 */
+.custom-div-icon {
+  background: none;
+  border: none;
+  z-index: 2000 !important;
+}
+
+.custom-div-icon svg {
+  filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.4));
+  z-index: 2000;
+}
+
+.multi-brand-marker {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid #000;
+  overflow: hidden;
+}
+
+.brand-half {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+}
+
+.brand-half-left {
+  left: 0;
+}
+
+.brand-half-right {
+  right: 0;
+}
+
+/* 确保标记点的白色边框在最上层 */
+.leaflet-pane.leaflet-marker-pane {
+  z-index: 600;
+}
+
+.leaflet-pane.leaflet-popup-pane {
+  z-index: 700;
+}
+
+/* 标记点样式 */
+.leaflet-marker-icon {
+  z-index: 1000 !important;
+}
+
+/* 确保圆形标记点的边框在填充色上面 */
+.leaflet-interactive {
+  stroke: #fff !important;
+  stroke-width: 3px !important;
+  stroke-opacity: 1 !important;
+  paint-order: stroke fill !important;
+}
+
+/* 确保标记点可以被点击 */
+.leaflet-pane > svg path.leaflet-interactive {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* 区域边界不接受鼠标事件 */
+.leaflet-overlay-pane path {
+  pointer-events: none !important;
+}
+
+.multiple-brand-item {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.color-stats-total {
+  font-size: 14px;
+  text-align: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.color-stats-filtered {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.color-stats-divider {
+  border: 0;
+  height: 1px;
+  background-color: #ddd;
+  margin: 15px 0;
+  width: 100%;
+  display: block;
+}
+
+.special-brand-item {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* 统计总计样式 */
+.stats-total {
+  text-align: center;
+  font-weight: bold;
+  margin: 8px 0 5px 0;
+  padding: 3px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+/* 统计分隔线样式 */
+.stats-divider {
+  height: 1px;
+  background-color: #ccc;
+  margin: 5px 0 8px 0;
+  width: 100%;
+}
+
+/* 标记点弹出框样式 */
+.marker-popup {
+  padding: 12px;
+  min-width: 220px;
+  max-width: 320px;
+  word-wrap: break-word;
+}
+
+.marker-popup h3 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.marker-popup p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #555;
+  word-wrap: break-word;
+}
+
+/* shop_code复制功能样式 */
+.shop-code-container {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+  width: 100%;
+  flex-wrap: wrap;
+  min-height: 30px;
+}
+
+.shop-code {
+  font-family: monospace; /* 使用等宽字体确保数字对齐 */
+  margin-right: 8px;
+  color: #555;
+  font-style: italic;
+  font-size: 14px;
+  word-break: break-all;
+  max-width: calc(100% - 45px);
+  white-space: normal;
+  overflow: visible;
+  display: inline-block;
+  letter-spacing: 0.5px; /* 增加字符间距 */
+}
+
+.copy-button {
+  background: none;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  transition: background-color 0.3s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.copy-button:hover {
+  background-color: #f0f0f0;
+}
+
+.copy-success {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 10000;
+  animation: fadeIn 0.3s, fadeOut 0.3s 1.2s forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 确保弹出框显示在标记点上方 */
+.leaflet-popup {
+  z-index: 2000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+  z-index: 2000 !important;
+}
+
+.leaflet-popup-tip-container {
+  z-index: 1999 !important;
+}
+
+.leaflet-popup-content {
+  margin: 13px;
+  font-size: 14px;
+  z-index: 2000 !important;
+}
+
+/* 复制按钮样式 */
+.copy-button {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  z-index: 2001 !important;
+}
+
+.copy-button:hover {
+  background: #e0e0e0;
+}
+
+.copy-button:active {
+  background: #d0d0d0;
+}
+
+.copy-button.copied {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* 复制成功提示样式 */
+.copy-success {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 3000;
+  animation: fadeInOut 1.5s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 弹出框和标记点的层级关系 */
+.leaflet-pane.leaflet-popup-pane {
+  z-index: 2000 !important;
+}
+
+.leaflet-pane.leaflet-marker-pane {
+  z-index: 1000 !important;
+}
+
+.leaflet-pane.leaflet-overlay-pane {
+  z-index: 900 !important;
+}
+
+/* 弹出框样式 */
+.leaflet-popup {
+  margin-bottom: 20px !important;
+  z-index: 2000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-popup-tip {
+  z-index: 1999 !important;
+}
+
+.leaflet-popup-content {
+  margin: 13px;
+  font-size: 14px;
+}
+
+/* 标记点弹出框内容 */
+.marker-popup {
+  z-index: 2000 !important;
+  position: relative;
+}
+
+/* shop_code容器样式 */
+.shop-code-container {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+  background: #f5f5f5;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.shop-code {
+  font-family: monospace;
+  font-size: 14px;
+  color: #333;
+  flex-grow: 1;
+}
+
+/* 复制按钮样式 */
+.copy-button {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  position: relative;
+  z-index: 2001 !important;
+}
+
+.copy-button:hover {
+  background: #e0e0e0;
+}
+
+.copy-button:active {
+  background: #d0d0d0;
+}
+
+.copy-button.copied {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* 复制成功提示样式 */
+.copy-success {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 3000;
+  animation: fadeInOut 1.5s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 区域设置面板样式 */
+.region-settings-panel {
+  position: fixed;
+  bottom: 0;
+  right: 50px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  min-width: 210px;
+  max-width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.region-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.region-settings-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.region-settings-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+  color: #666;
+}
+
+.region-filter-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 5px;
+}
+
+.region-filter-action {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.region-filter-action:hover:not(:disabled) {
+  background: #f4f4f4;
+}
+
+.region-filter-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.region-settings-list {
+  max-height: calc(300px - 80px);
+  overflow-y: auto;
+  padding: 0 5px;
+}
+
+.region-settings-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.region-settings-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
+}
+
+.region-settings-list::-webkit-scrollbar-track {
+  background-color: #f5f5f5;
+}
+
+.region-settings-item {
+  margin: 4px 0;
+  padding: 2px 0;
+}
+
+.region-settings-item label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.region-settings-item input[type="checkbox"] {
+  margin-right: 4px;
+  transform: scale(0.9);
+}
+
+.region-settings-footer {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+  .region-settings-panel {
+    min-width: 200px;
+    max-width: 240px;
+    padding: 8px;
+    right: 10px;
+    bottom: 0;
+  }
+  
+  .region-settings-header h3 {
+    font-size: 14px;
+  }
+  
+  .region-filter-action {
+    padding: 3px 6px;
+    font-size: 12px;
+  }
+
+  .region-settings-list {
+    max-height: calc(300px - 70px);
+  }
+
+  .region-settings-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .region-settings-footer {
+    font-size: 12px;
+  }
+}
+
+/* 有潜力店铺样式 */
+@keyframes pulse-border {
+  0% { stroke-width: 3px; stroke-opacity: 1; }
+  50% { stroke-width: 4px; stroke-opacity: 0.8; }
+  100% { stroke-width: 3px; stroke-opacity: 1; }
+}
+
+.potential-marker {
+  /* 移除闪烁动画 */
+}
+
+/* 确保标记点的白色边框在最上层 */
+.leaflet-pane.leaflet-marker-pane {
+  z-index: 600;
+}
+
+/* 有潜力店铺标识样式 */
+.potential-label {
+  color: #FFD700;
+  font-weight: bold;
+  background-color: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 4px;
+  padding: 2px 5px;
+  margin: 5px 0;
+  text-align: center;
+}
+
+/* 有潜力店铺说明样式 */
+.potential-info {
+  font-size: 12px;
+  text-align: center;
+  margin: 5px 0;
+  color: #333;
+  padding: 3px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.potential-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #FFD700;
+  margin-right: 5px;
+}
+
+/* 统计面板样式 */
+.color-stats-panel {
+  position: absolute;
+  right: 46px;
+  bottom: 0;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  min-width: 220px;
+  max-width: 280px;
+  max-height: 90vh;
+  overflow-y: auto;
 }

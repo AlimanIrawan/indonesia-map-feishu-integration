@@ -1,0 +1,40 @@
+name: Keep Service Alive
+
+on:
+  schedule:
+    # 每10分钟ping一次服务 (避免休眠)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Ping服务保持活跃
+      run: |
+        # 替换为您的实际Render服务地址
+        SERVICE_URL="https://indonesia-map-feishu-service.onrender.com"
+        
+        echo "正在ping服务: $SERVICE_URL/health"
+        
+        response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/health")
+        
+        if [ $response -eq 200 ]; then
+          echo "✅ 服务运行正常 (HTTP $response)"
+        else
+          echo "⚠️ 服务响应异常 (HTTP $response)"
+          exit 1
+        fi
+        
+        # 同时ping根路径
+        echo "正在ping根路径: $SERVICE_URL"
+        root_response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL")
+        
+        if [ $root_response -eq 200 ]; then
+          echo "✅ 根路径响应正常 (HTTP $root_response)"
+        else
+          echo "⚠️ 根路径响应异常 (HTTP $root_response)"
+        fi
+        
+        echo "Keep-alive任务完成" 

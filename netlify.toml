@@ -1,0 +1,16 @@
+[build]
+  publish = "build"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  # 定义处理CSV文件的路径
+  for = "/markers.csv"
+  [headers.values]
+    # 允许跨域访问CSV文件
+    Access-Control-Allow-Origin = "*"
+    Content-Type = "text/csv" 
