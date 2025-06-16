@@ -1,0 +1,238 @@
+📋 飞书API参数配置详细指南
+
+═══════════════════════════════════════════════════════════════
+
+🎯 需要配置的参数概览
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+您需要在文件：feishu-webhook-server/飞书自动化模板.js 中配置以下参数：
+
+✅ 必须配置的参数：
+1. feishu.appSecret - 飞书应用密钥
+2. bitable.appToken - 多维表格Token
+3. bitable.tableId - 表格ID
+4. webhook.token - 服务器API密钥
+
+✅ 可选配置的参数：
+1. bitable.viewId - 视图ID（可留空使用默认视图）
+
+🔑 第一步：获取飞书应用密钥（App Secret）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 打开飞书开发者后台
+   网址：https://open.feishu.cn/app
+
+2. 找到您的应用（App ID已设置为：cli_66d44e17a24a100b）
+   - 如果没有应用，需要先创建一个
+   - 如果有应用，点击进入应用详情页
+
+3. 在应用详情页找到"凭证与基础信息"
+   - 复制 App Secret（应用密钥）
+   - 示例格式：xxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
+
+4. 确保应用权限配置正确：
+   ✅ 必需权限：
+   - 查看、评论、编辑和管理多维表格：bitable:app
+   - 获取多维表格信息：bitable:app:readonly
+   - 获取与管理通讯录信息：contact:user:readonly
+
+📊 第二步：获取多维表格Token（App Token）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 打开您的飞书多维表格
+
+2. 查看浏览器地址栏，找到类似格式：
+   https://xxx.feishu.cn/base/xxxxxxxxxxxxx?table=xxxxxxxxxxxxxx
+   
+3. 提取App Token：
+   - 地址中 /base/ 后面的字符串就是 App Token
+   - 示例：如果地址是 /base/bascnxxxxxxxxxxxxxx
+   - 那么 App Token 就是：bascnxxxxxxxxxxxxxx
+
+4. 注意事项：
+   ⚠️ App Token通常以 "basc" 开头
+   ⚠️ 确保您有该表格的访问权限
+
+📋 第三步：获取表格ID（Table ID）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 在同一个地址栏中找到 table= 后面的参数：
+   https://xxx.feishu.cn/base/xxxxxxxxxxxxx?table=tblxxxxxxxxxxxxxx
+   
+2. 提取Table ID：
+   - table= 后面的字符串就是 Table ID
+   - 示例：如果是 ?table=tblxxxxxxxxxxxxxx
+   - 那么 Table ID 就是：tblxxxxxxxxxxxxxx
+
+3. 注意事项：
+   ⚠️ Table ID通常以 "tbl" 开头
+   ⚠️ 确保选择了正确的数据表
+
+👁️ 第四步：获取视图ID（View ID）- 可选
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 如果您想只同步特定视图的数据，可以配置View ID
+
+2. 在地址栏中找到 view= 参数：
+   https://xxx.feishu.cn/base/xxx?table=xxx&view=viwxxxxxxxxxxxxxx
+   
+3. 提取View ID：
+   - view= 后面的字符串就是 View ID
+   - 示例：viwxxxxxxxxxxxxxx
+
+4. 如果不配置View ID：
+   ✅ 系统会使用默认视图
+   ✅ 通常会获取表格中的所有数据
+
+🔐 第五步：设置服务器API密钥（Token）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+这个密钥用于保护您的Render服务器API接口：
+
+1. 建议使用一个复杂的密钥，例如：
+   - feishu-indonesia-map-2024-secure-token-9876543210
+   - 或使用在线密钥生成器生成随机字符串
+
+2. 注意事项：
+   ⚠️ 不要使用简单的密码
+   ⚠️ 这个密钥需要保密
+   ⚠️ 建议包含字母、数字、特殊字符
+
+⚙️ 第六步：修改配置文件
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+打开文件：feishu-webhook-server/飞书自动化模板.js
+
+找到配置区域并修改：
+
+```javascript
+const CONFIG = {
+  // 飞书应用配置
+  feishu: {
+    appId: 'cli_66d44e17a24a100b',          // ✅ 已配置
+    appSecret: 'YOUR_APP_SECRET_HERE',       // 🔄 需要修改
+    baseUrl: 'https://open.feishu.cn'       // ✅ 无需修改
+  },
+  
+  // 多维表格配置
+  bitable: {
+    appToken: 'YOUR_APP_TOKEN_HERE',         // 🔄 需要修改
+    tableId: 'YOUR_TABLE_ID_HERE',           // 🔄 需要修改
+    viewId: 'YOUR_VIEW_ID_HERE'              // 🔄 可选修改（可留空）
+  },
+  
+  // Render服务器配置
+  webhook: {
+    url: 'https://indonesia-map-feishu-integration.onrender.com',  // ✅ 无需修改
+    token: 'YOUR_API_TOKEN_HERE'             // 🔄 需要修改
+  }
+};
+```
+
+📝 配置示例
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+完成配置后应该类似这样：
+
+```javascript
+const CONFIG = {
+  feishu: {
+    appId: 'cli_66d44e17a24a100b',
+    appSecret: 'cli_66d44e17a24a100b-AbCdEfGhIjKlMnOpQrStUvWxYz123456',
+    baseUrl: 'https://open.feishu.cn'
+  },
+  
+  bitable: {
+    appToken: 'bascnAbCdEfGhIjKlMnOpQrStUvWxYz1234567890',
+    tableId: 'tblAbCdEfGhIjKlMnOpQrStUvWxYz1234567890',
+    viewId: 'viwAbCdEfGhIjKlMnOpQrStUvWxYz1234567890'  // 或留空 ''
+  },
+  
+  webhook: {
+    url: 'https://indonesia-map-feishu-integration.onrender.com',
+    token: 'feishu-indonesia-map-2024-secure-token-9876543210'
+  }
+};
+```
+
+🔍 配置验证清单
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+配置完成后，请检查：
+
+✅ appSecret: 是否以应用ID开头，后面跟着连字符和长字符串
+✅ appToken: 是否以 "basc" 开头
+✅ tableId: 是否以 "tbl" 开头  
+✅ viewId: 是否以 "viw" 开头（或为空字符串）
+✅ token: 是否设置了复杂的密钥字符串
+
+❌ 常见错误：
+- 复制了错误的ID格式
+- 包含了多余的空格或换行符
+- 使用了过于简单的API密钥
+- 应用权限配置不完整
+
+🧪 测试配置
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+配置完成后，您可以通过以下方式测试：
+
+1. 运行测试命令：
+   cd feishu-webhook-server
+   node 飞书自动化模板.js single
+
+2. 检查输出日志：
+   ✅ 成功：显示"获取访问令牌成功"、"获取表格数据成功"
+   ❌ 失败：显示具体错误信息，根据错误调整配置
+
+3. 常见错误及解决：
+   - "获取访问令牌失败" → 检查appId和appSecret
+   - "获取表格记录失败" → 检查appToken、tableId、权限
+   - "表格不存在" → 检查tableId是否正确
+   - "权限不足" → 检查应用权限配置
+
+📋 字段映射配置（可选）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+如果您的飞书表格字段名与默认不同，可以调整字段映射：
+
+默认支持的字段名：
+- outlet_code、店铺代码 → outlet_code
+- latitude、纬度 → latitude  
+- longitude、经度 → longitude
+- nama_pemilik、店主姓名、outlet_name → nama_pemilik
+- brand、品牌 → brand
+- kecamatan、区域 → kecamatan
+- potensi、潜力 → potensi
+
+如果您的字段名不在上述列表中，请在convertFeishuRecord函数中添加映射。
+
+🚀 完成配置后的步骤
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 保存配置文件
+2. 双击运行：飞书强制全量同步.sh
+3. 输入 "yes" 确认执行
+4. 等待同步完成
+5. 检查地图应用：https://locationmarker.netlify.app
+
+🔒 安全建议
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ 重要安全注意事项：
+1. 不要将配置文件推送到公开的Git仓库
+2. 定期更换API密钥
+3. 确保只有必要的人员知道这些密钥
+4. 建议创建专门的飞书应用，而不是使用主要应用
+
+═══════════════════════════════════════════════════════════════
+
+💡 需要帮助？
+
+如果在配置过程中遇到问题：
+1. 检查飞书应用权限是否正确配置
+2. 确认表格ID和应用Token是否匹配
+3. 运行测试脚本查看具体错误信息
+4. 查看服务器日志了解详细错误原因
+
+配置完成后，您就可以实现飞书数据与地图应用的实时同步了！ 

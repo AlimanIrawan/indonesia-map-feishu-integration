@@ -8,13 +8,16 @@
  * 3. 根据表格字段名调整字段映射
  */
 
+// 导入依赖模块
+const axios = require('axios');
+
 // ===== 配置区域 =====
 const CONFIG = {
   // 服务器地址（请修改为实际地址）
   SERVER_URL: 'http://您的服务器地址:3001',
   
   // API密钥（请修改为实际密钥）
-  API_TOKEN: 'your-super-secret-token',
+  API_TOKEN: 'feishu-indonesia-map-2024-1750066642-961a3a40e8d0f13d',
   
   // 字段映射（如果表格字段名不同，请修改）
   FIELD_MAPPING: {
@@ -22,6 +25,27 @@ const CONFIG = {
     latitude: 'latitude', 
     longitude: 'longitude',
     nama_pemilik: 'Nama Pemilik'
+  },
+
+  // 飞书应用配置
+  feishu: {
+    appId: 'cli_a8c55c2b3268900e',
+    appSecret: 'kEOPt0k9hIMrVg82xqafgdbQZPYlCr8l',
+    baseUrl: 'https://open.feishu.cn'
+  },
+  
+  // 多维表格配置
+  bitable: {
+    appToken: 'HEqVwhzBciH75KkD0ZclpFQugnJ',
+    tableId: 'tblr5cr35dwKZaj1'
+    // 注释掉 viewId，让系统使用默认视图
+    // viewId: 'vewOt0hp6k'
+  },
+  
+  // Render服务器配置
+  webhook: {
+    url: 'https://indonesia-map-feishu-integration.onrender.com',
+    token: 'feishu-indonesia-map-2024-1750066642-961a3a40e8d0f13d'
   }
 };
 
@@ -288,4 +312,294 @@ async function manualTest() {
     await getServerStatus();
   }
 }
-*/ 
+*/
+
+// 获取飞书访问令牌
+async function getAccessToken() {
+  try {
+    const response = await axios.post(`${CONFIG.feishu.baseUrl}/open-apis/auth/v3/tenant_access_token/internal`, {
+      app_id: CONFIG.feishu.appId,
+      app_secret: CONFIG.feishu.appSecret
+    });
+
+    if (response.data.code === 0) {
+      return response.data.tenant_access_token;
+    } else {
+      throw new Error(`获取访问令牌失败: ${response.data.msg}`);
+    }
+  } catch (error) {
+    console.error('获取访问令牌失败:', error.message);
+    throw error;
+  }
+}
+
+// 获取多维表格所有记录（分页获取）
+async function getAllTableRecords(accessToken) {
+  try {
+    let allRecords = [];
+    let pageToken = undefined;
+    let hasMore = true;
+
+    console.log('📊 开始获取飞书表格数据...');
+
+    while (hasMore) {
+      const params = {
+        page_size: 500 // 每页最多500条
+      };
+      
+      if (pageToken) {
+        params.page_token = pageToken;
+      }
+      
+      // 暂时注释掉 viewId 参数，使用默认视图
+      // if (CONFIG.bitable.viewId) {
+      //   params.view_id = CONFIG.bitable.viewId;
+      // }
+
+      console.log(`📡 API请求参数:`, {
+        url: `${CONFIG.feishu.baseUrl}/open-apis/bitable/v1/apps/${CONFIG.bitable.appToken}/tables/${CONFIG.bitable.tableId}/records`,
+        params: params
+      });
+
+      const response = await axios.get(
+        `${CONFIG.feishu.baseUrl}/open-apis/bitable/v1/apps/${CONFIG.bitable.appToken}/tables/${CONFIG.bitable.tableId}/records`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          params
+        }
+      );
+
+      if (response.data.code === 0) {
+        const records = response.data.data.items || [];
+        allRecords = allRecords.concat(records);
+        
+        console.log(`📥 已获取 ${records.length} 条记录，累计 ${allRecords.length} 条`);
+        
+        hasMore = response.data.data.has_more;
+        pageToken = response.data.data.page_token;
+      } else {
+        console.error('❌ 飞书API返回错误:', response.data);
+        throw new Error(`获取表格记录失败: ${response.data.msg || response.data.code}`);
+      }
+    }
+
+    console.log(`✅ 成功获取飞书表格数据，总计 ${allRecords.length} 条记录`);
+    return allRecords;
+
+  } catch (error) {
+    console.error('获取表格记录失败:', error.message);
+    if (error.response) {
+      console.error('API响应错误:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    throw error;
+  }
+}
+
+// 转换飞书记录为标准格式
+function convertFeishuRecord(record) {
+  const fields = record.fields;
+  
+  // 根据您的飞书表格字段名称调整
+  return {
+    outlet_code: fields['outlet_code'] || fields['店铺代码'] || '',
+    latitude: fields['latitude'] || fields['纬度'] || '',
+    longitude: fields['longitude'] || fields['经度'] || '', 
+    nama_pemilik: fields['nama_pemilik'] || fields['店主姓名'] || fields['outlet_name'] || '',
+    brand: fields['brand'] || fields['品牌'] || 'Other',
+    kecamatan: fields['kecamatan'] || fields['区域'] || 'Unknown',
+    potensi: fields['potensi'] || fields['潜力'] || ''
+  };
+}
+
+// 增量同步单条记录
+async function syncSingleRecord(recordData) {
+  try {
+    console.log('📤 发送单条记录到Render服务器...');
+    
+    const response = await axios.post(`${CONFIG.webhook.url}/api/feishu/webhook`, {
+      data: recordData,
+      token: CONFIG.webhook.token
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': CONFIG.webhook.token
+      }
+    });
+
+    if (response.data.success) {
+      console.log(`✅ 单条记录同步成功: ${recordData.outlet_code}`);
+      return response.data;
+    } else {
+      throw new Error(response.data.error || '同步失败');
+    }
+
+  } catch (error) {
+    console.error('单条记录同步失败:', error.message);
+    throw error;
+  }
+}
+
+// 批量增量同步
+async function syncBatchRecords(recordsData) {
+  try {
+    console.log(`📤 发送批量记录到Render服务器（${recordsData.length}条）...`);
+    
+    const response = await axios.post(`${CONFIG.webhook.url}/api/feishu/batch`, {
+      data: recordsData,
+      token: CONFIG.webhook.token
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': CONFIG.webhook.token
+      }
+    });
+
+    if (response.data.success) {
+      console.log(`✅ 批量同步成功: 新增${response.data.addedCount}条，更新${response.data.updatedCount}条`);
+      return response.data;
+    } else {
+      throw new Error(response.data.error || '批量同步失败');
+    }
+
+  } catch (error) {
+    console.error('批量同步失败:', error.message);
+    throw error;
+  }
+}
+
+// 🔄 全量替换同步（新功能）
+async function syncReplaceAll(recordsData) {
+  try {
+    console.log(`🔄 执行全量替换同步到Render服务器（${recordsData.length}条）...`);
+    console.log('⚠️  注意：这将完全替换服务器上的所有数据！');
+    
+    const response = await axios.post(`${CONFIG.webhook.url}/api/feishu/replace`, {
+      data: recordsData,
+      token: CONFIG.webhook.token
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': CONFIG.webhook.token
+      }
+    });
+
+    if (response.data.success) {
+      console.log(`✅ 全量替换成功: 总记录数${response.data.totalRecords}条`);
+      console.log(`🔄 同步模式: ${response.data.mode}`);
+      return response.data;
+    } else {
+      throw new Error(response.data.error || '全量替换失败');
+    }
+
+  } catch (error) {
+    console.error('全量替换失败:', error.message);
+    throw error;
+  }
+}
+
+// 主执行函数
+async function main() {
+  try {
+    console.log('\n🚀 飞书数据自动化同步开始...');
+    
+    // 获取同步模式参数
+    const syncMode = process.argv[2] || 'batch'; // 默认批量增量
+    console.log(`📋 同步模式: ${syncMode}`);
+    
+    // 1. 获取访问令牌
+    const accessToken = await getAccessToken();
+    
+    // 2. 获取所有表格记录
+    const records = await getAllTableRecords(accessToken);
+    
+    if (records.length === 0) {
+      console.log('📭 没有找到任何记录');
+      return;
+    }
+    
+    // 3. 转换记录格式
+    const convertedRecords = records.map(convertFeishuRecord).filter(record => 
+      record.outlet_code && record.latitude && record.longitude
+    );
+    
+    console.log(`🔄 有效记录数: ${convertedRecords.length}`);
+    
+    // 4. 根据模式执行同步
+    let result;
+    
+    switch (syncMode) {
+      case 'single':
+        // 单条同步（仅同步第一条记录作为示例）
+        if (convertedRecords.length > 0) {
+          result = await syncSingleRecord(convertedRecords[0]);
+        }
+        break;
+        
+      case 'batch':
+        // 批量增量同步
+        result = await syncBatchRecords(convertedRecords);
+        break;
+        
+      case 'replace':
+        // 🔄 全量替换同步
+        result = await syncReplaceAll(convertedRecords);
+        break;
+        
+      default:
+        throw new Error(`未知的同步模式: ${syncMode}`);
+    }
+    
+    console.log('\n✅ 飞书数据自动化同步完成！');
+    console.log('📊 同步结果:', JSON.stringify(result, null, 2));
+    
+  } catch (error) {
+    console.error('\n❌ 飞书数据自动化同步失败!');
+    console.error('错误详情:', error.message);
+    
+    console.log('\n🔍 请检查:');
+    console.log('1. 飞书应用配置是否正确');
+    console.log('2. 多维表格ID和视图ID是否正确');
+    console.log('3. Render服务器是否在线');
+    console.log('4. 网络连接是否正常');
+  }
+}
+
+// 使用说明
+function showUsage() {
+  console.log('\n📋 使用方法:');
+  console.log('node 飞书自动化模板.js [模式]');
+  console.log('');
+  console.log('模式选项:');
+  console.log('  single   - 单条记录同步（测试用）');
+  console.log('  batch    - 批量增量同步（默认）');
+  console.log('  replace  - 全量替换同步（强制同步）');
+  console.log('');
+  console.log('示例:');
+  console.log('  node 飞书自动化模板.js replace   # 全量替换同步');
+  console.log('  node 飞书自动化模板.js batch     # 增量同步');
+}
+
+// 如果直接运行此脚本
+if (require.main === module) {
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    showUsage();
+  } else {
+    main();
+  }
+}
+
+module.exports = {
+  getAccessToken,
+  getAllTableRecords,
+  convertFeishuRecord,
+  syncSingleRecord,
+  syncBatchRecords,
+  syncReplaceAll
+}; 

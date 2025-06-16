@@ -1,0 +1,66 @@
+🔍 飞书链接分析结果
+======================================
+
+原始链接：
+https://rsgqogmaw549.sg.larksuite.com/share/base/view/shrlgboI4pk1v5WNVeJO0fPl50g
+
+✅ 链接格式分析：
+================
+域名：rsgqogmaw549.sg.larksuite.com
+路径：/share/base/view/
+视图ID：shrlgboI4pk1v5WNVeJO0fPl50g
+
+❌ 关键问题发现：
+================
+这个链接只包含视图ID (shrlgboI4pk1v5WNVeJO0fPl50g)，
+但缺少App Token和Table ID！
+
+🎯 解决方案：
+============
+这个链接是一个分享的视图链接，我们需要获取完整的多维表格基础信息。
+
+请您按照以下步骤获取完整的App Token：
+
+步骤1：访问完整的多维表格
+------------------------
+1. 点击您提供的链接
+2. 在打开的页面中，查看浏览器地址栏
+3. 寻找包含完整信息的URL
+
+步骤2：查找完整URL格式
+----------------------
+正确的URL应该类似：
+https://域名/base/[APP_TOKEN]?table=[TABLE_ID]&view=[VIEW_ID]
+
+或者包含这些参数的其他格式。
+
+步骤3：获取App Token的其他方法
+------------------------------
+1. 在多维表格页面按F12打开开发者工具
+2. 切换到Network标签
+3. 刷新页面
+4. 搜索包含"bitable"的请求
+5. 从请求URL中找到app_token参数
+
+当前错误原因：
+==============
+我们之前使用的参数：
+- App Token: HEqVwhzBciH75KkD0ZclpFQugnJ
+- Table ID: tblr5cr35dwKZaj1  
+- View ID: vewOt0hp6k
+
+这些参数是从之前的/wiki/链接中错误提取的。
+
+新发现的参数：
+==============
+- View ID: shrlgboI4pk1v5WNVeJO0fPl50g (从新链接获取)
+- App Token: 仍需要获取
+- Table ID: 仍需要获取
+
+下一步行动：
+============
+请您：
+1. 访问提供的链接
+2. 在页面中查看是否有"复制链接"或"分享设置"按钮
+3. 生成包含App Token的完整链接
+4. 或使用开发者工具获取API请求中的参数 
