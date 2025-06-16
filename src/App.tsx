@@ -421,11 +421,34 @@ function App() {
 
     const checkForUpdates = async () => {
       try {
-        // 使用HEAD请求检查文件的最后修改时间
-        const response = await fetch(`${window.location.origin}/markers.csv`, {
-          method: 'HEAD',
-          cache: 'no-cache'
-        });
+        // 优先从Render服务器检查更新，如果失败则检查本地文件
+        const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
+        const localUrl = `${window.location.origin}/markers.csv`;
+        
+        let response;
+        let dataSource = '';
+        
+        try {
+          // 尝试从Render服务器检查更新
+          response = await fetch(renderUrl, {
+            method: 'HEAD',
+            cache: 'no-cache'
+          });
+          
+          if (response.ok) {
+            dataSource = 'Render服务器';
+          } else {
+            throw new Error('Render服务器检查失败');
+          }
+        } catch (error) {
+          // 如果Render失败，检查本地文件
+          console.log('⚠️ Render服务器检查失败，检查本地文件');
+          response = await fetch(localUrl, {
+            method: 'HEAD',
+            cache: 'no-cache'
+          });
+          dataSource = '本地文件';
+        }
         
         if (response.ok) {
           const lastModified = response.headers.get('Last-Modified');
@@ -434,12 +457,12 @@ function App() {
             
             // 如果文件时间比上次记录的时间新，则重新加载数据
             if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
-              console.log('检测到数据更新，正在重新加载...');
+              console.log(`检测到${dataSource}数据更新，正在重新加载...`);
               setDataUpdateCount(prev => prev + 1);
               
               // 显示更新提示
               const updateNotification = document.createElement('div');
-              updateNotification.textContent = '检测到新数据，正在更新地图...';
+              updateNotification.textContent = `检测到新数据（${dataSource}），正在更新地图...`;
               updateNotification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -486,13 +509,18 @@ function App() {
   // 加载标记点数据的函数
   const loadMarkerData = (kecamatanValue: string) => {
     setIsLoading(true);
-    const csvUrl = `${window.location.origin}/markers.csv?t=${new Date().getTime()}`;
     
-    fetch(csvUrl)
+    // 优先从Render服务器读取最新数据，如果失败则使用本地文件
+    const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
+    const localUrl = `${window.location.origin}/markers.csv?t=${new Date().getTime()}`;
+    
+    // 尝试从Render服务器获取数据
+    fetch(renderUrl)
       .then(response => {
         if (!response.ok) {
-          throw new Error('无法加载标记点数据');
+          throw new Error('Render服务器数据获取失败，尝试本地数据');
         }
+        console.log('✅ 从Render服务器获取最新数据');
         
         // 记录文件的最后修改时间
         const lastModified = response.headers.get('Last-Modified');
@@ -503,6 +531,29 @@ function App() {
         }
         
         return response.text();
+      })
+      .catch(error => {
+        console.log('⚠️ Render服务器数据获取失败，使用本地数据:', error.message);
+        
+        // 如果Render服务器失败，使用本地文件
+        return fetch(localUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('无法加载标记点数据');
+            }
+            
+            console.log('📄 使用本地CSV数据');
+            
+            // 记录文件的最后修改时间
+            const lastModified = response.headers.get('Last-Modified');
+            if (lastModified) {
+              setLastUpdateTime(new Date(lastModified).getTime());
+            } else {
+              setLastUpdateTime(Date.now());
+            }
+            
+            return response.text();
+          });
       })
       .then(csvText => {
         const lines = csvText.split('\n');

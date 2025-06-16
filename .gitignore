@@ -1,65 +1,53 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# 依赖包
 node_modules/
-feishu-webhook-server/node_modules/
-
-# environment
-.env
-feishu-webhook-server/.env
-
-# logs
-*.log
-logs/
-feishu-webhook-server/logs/
-
-# backups
-backups/
-feishu-webhook-server/backups/
-
-# misc
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# temp
-*.tmp
-*.temp
-
-# build
+# 构建输出
 dist/
 build/
 
-# cache
-.cache/
-.npm/
-.yarn/
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# testing
+# 日志文件
+*.log
+logs/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE/编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.tmp
+*.temp
+
+# Python虚拟环境（如果使用）
+venv/
+env/
+__pycache__/
+*.pyc
+
+# 敏感数据
+*.key
+*.pem
+secrets/
+
+# 测试覆盖率
 coverage/
+.nyc_output
 
-# database
-*.sqlite
-*.db
-
-# csv
-*_backup_*.csv
-
-# Local Netlify folder
-.netlify
+# Parcel缓存
+.cache/
+.parcel-cache/
