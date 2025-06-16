@@ -555,17 +555,33 @@ app.post('/webhook', async (req, res) => {
     
     const fields = record.fields;
     
-    // 验证必要字段
-    if (!fields.latitude || !fields.longitude) {
-      return res.status(400).json({ 
-        success: false, 
-        error: '缺少必要的经纬度信息' 
-      });
+    // 统一字段映射，支持多种字段名
+    const outletCode = fields['Outlet Code'] || fields.outlet_code || fields.shop_code || fields['outlet code'] || '';
+    const latitude = fields.latitude || fields.lat || fields.Latitude || '';
+    const longitude = fields.longitude || fields.lng || fields.Longitude || '';
+    const namaPemilik = fields['Nama Pemilik'] || fields.nama_pemilik || fields['outlet name'] || fields.outletName || '';
+    
+    // 只验证必要的4个字段：Outlet Code, latitude, longitude, Nama Pemilik
+    const requiredFields = [
+      { name: 'Outlet Code', value: outletCode },
+      { name: 'latitude', value: latitude },
+      { name: 'longitude', value: longitude },
+      { name: 'Nama Pemilik', value: namaPemilik }
+    ];
+    
+    for (const field of requiredFields) {
+      if (!field.value || field.value.toString().trim() === '') {
+        return res.status(400).json({ 
+          success: false, 
+          error: `缺少必填字段: ${field.name}`,
+          receivedFields: Object.keys(fields)
+        });
+      }
     }
     
     // 验证经纬度格式
-    const lat = parseFloat(fields.latitude);
-    const lng = parseFloat(fields.longitude);
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
     
     if (isNaN(lat) || lat < -90 || lat > 90) {
       return res.status(400).json({ 
@@ -581,15 +597,15 @@ app.post('/webhook', async (req, res) => {
       });
     }
     
-    // 转换为CSV格式
+    // 转换为CSV格式，其他字段都是可选的
     const newData = {
-      shop_code: fields.shop_code || '',
+      shop_code: outletCode,
       latitude: lat,
       longitude: lng,
-      'outlet name': fields['outlet name'] || '',
-      brand: fields.brand || '',
-      kecamatan: fields.kecamatan || '',
-      potensi: fields.potensi || ''
+      'outlet name': namaPemilik,
+      brand: fields.brand || fields.Brand || 'Other',  // 可选，默认Other
+      kecamatan: fields.kecamatan || fields.Kecamatan || '',  // 可选
+      potensi: fields.potensi || fields.Potensi || ''  // 可选
     };
     
     // 读取现有数据
