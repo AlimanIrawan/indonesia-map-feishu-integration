@@ -145,16 +145,51 @@ function validateData(data) {
     }
   }
 
-  // 验证经纬度格式
-  const lat = parseFloat(data.latitude);
-  const lng = parseFloat(data.longitude);
-  
-  if (isNaN(lat) || lat < -90 || lat > 90) {
-    return { valid: false, error: '纬度格式错误，必须在-90到90之间' };
+  // 验证经纬度格式 - 支持文本格式，智能转换
+  function cleanAndParseCoordinate(value, coordinateType) {
+    if (!value) return null;
+    
+    // 转换为字符串并清理
+    let cleanValue = value.toString().trim();
+    
+    // 移除可能的前缀文本（如"纬度:"、"latitude:"等）
+    cleanValue = cleanValue.replace(/^[^-\d.]*/, '');
+    
+    // 移除可能的后缀文本
+    cleanValue = cleanValue.replace(/[^-\d.]*$/, '');
+    
+    // 解析为数字
+    const numValue = parseFloat(cleanValue);
+    
+    if (isNaN(numValue)) {
+      writeLog('warn', `${coordinateType}解析失败`, { original: value, cleaned: cleanValue });
+      return null;
+    }
+    
+    return numValue;
   }
   
-  if (isNaN(lng) || lng < -180 || lng > 180) {
-    return { valid: false, error: '经度格式错误，必须在-180到180之间' };
+  const lat = cleanAndParseCoordinate(data.latitude, '纬度');
+  const lng = cleanAndParseCoordinate(data.longitude, '经度');
+  
+  // 验证解析结果
+  if (lat === null) {
+    writeLog('error', '纬度解析失败', { original: data.latitude, fields: Object.keys(data) });
+    return { valid: false, error: `纬度数据无效: "${data.latitude}"，请检查数据格式` };
+  }
+  
+  if (lng === null) {
+    writeLog('error', '经度解析失败', { original: data.longitude, fields: Object.keys(data) });
+    return { valid: false, error: `经度数据无效: "${data.longitude}"，请检查数据格式` };
+  }
+  
+  // 验证经纬度范围
+  if (lat < -90 || lat > 90) {
+    return { valid: false, error: `纬度超出范围: ${lat}，必须在-90到90之间` };
+  }
+  
+  if (lng < -180 || lng > 180) {
+    return { valid: false, error: `经度超出范围: ${lng}，必须在-180到180之间` };
   }
 
   return { valid: true };
@@ -579,21 +614,66 @@ app.post('/webhook', async (req, res) => {
       }
     }
     
-    // 验证经纬度格式
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
+    // 验证经纬度格式 - 支持文本格式，智能转换
+    function cleanAndParseCoordinate(value, coordinateType) {
+      if (!value) return null;
+      
+      // 转换为字符串并清理
+      let cleanValue = value.toString().trim();
+      
+      // 移除可能的前缀文本（如"纬度:"、"latitude:"等）
+      cleanValue = cleanValue.replace(/^[^-\d.]*/, '');
+      
+      // 移除可能的后缀文本
+      cleanValue = cleanValue.replace(/[^-\d.]*$/, '');
+      
+      // 解析为数字
+      const numValue = parseFloat(cleanValue);
+      
+      if (isNaN(numValue)) {
+        writeLog('warn', `${coordinateType}解析失败`, { original: value, cleaned: cleanValue });
+        return null;
+      }
+      
+      return numValue;
+    }
     
-    if (isNaN(lat) || lat < -90 || lat > 90) {
+    const lat = cleanAndParseCoordinate(latitude, '纬度');
+    const lng = cleanAndParseCoordinate(longitude, '经度');
+    
+    // 验证解析结果
+    if (lat === null) {
+      writeLog('error', '纬度解析失败', { original: latitude, fields: Object.keys(fields) });
       return res.status(400).json({ 
         success: false, 
-        error: '纬度格式错误，必须在-90到90之间' 
+        error: `纬度数据无效: "${latitude}"，请检查数据格式`,
+        receivedData: { latitude, longitude, allFields: Object.keys(fields) }
       });
     }
     
-    if (isNaN(lng) || lng < -180 || lng > 180) {
+    if (lng === null) {
+      writeLog('error', '经度解析失败', { original: longitude, fields: Object.keys(fields) });
       return res.status(400).json({ 
         success: false, 
-        error: '经度格式错误，必须在-180到180之间' 
+        error: `经度数据无效: "${longitude}"，请检查数据格式`,
+        receivedData: { latitude, longitude, allFields: Object.keys(fields) }
+      });
+    }
+    
+    // 验证经纬度范围
+    if (lat < -90 || lat > 90) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `纬度超出范围: ${lat}，必须在-90到90之间`,
+        receivedData: { latitude, longitude }
+      });
+    }
+    
+    if (lng < -180 || lng > 180) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `经度超出范围: ${lng}，必须在-180到180之间`,
+        receivedData: { latitude, longitude }
       });
     }
     
