@@ -577,24 +577,59 @@ app.get('/health', (req, res) => {
 // 简化的Webhook端点（专为飞书自动化设计）
 app.post('/webhook', async (req, res) => {
   try {
-    writeLog('info', '收到飞书自动化Webhook数据', JSON.stringify(req.body));
+    // 详细日志记录 - 记录完整请求信息
+    const requestInfo = {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body,
+      timestamp: new Date().toISOString(),
+      ip: req.ip
+    };
+    
+    writeLog('info', '=== 收到飞书自动化Webhook请求 ===', requestInfo);
+    console.log('\n🔍 详细请求信息：');
+    console.log('请求体:', JSON.stringify(req.body, null, 2));
+    console.log('请求头:', JSON.stringify(req.headers, null, 2));
     
     // 从飞书自动化获取的数据格式
     const { record } = req.body;
     if (!record || !record.fields) {
+      writeLog('error', '数据格式错误：缺少record.fields结构', { received: req.body });
       return res.status(400).json({ 
         success: false, 
-        error: '数据格式错误：需要record.fields结构' 
+        error: '数据格式错误：需要record.fields结构',
+        receivedData: req.body
       });
     }
     
     const fields = record.fields;
+    writeLog('info', '提取的字段数据', { fields, fieldKeys: Object.keys(fields) });
+    console.log('\n📋 字段详细分析：');
+    Object.keys(fields).forEach(key => {
+      console.log(`- ${key}: "${fields[key]}" (类型: ${typeof fields[key]})`);
+    });
     
     // 统一字段映射，支持多种字段名
     const outletCode = fields['Outlet Code'] || fields.outlet_code || fields.shop_code || fields['outlet code'] || '';
     const latitude = fields.latitude || fields.lat || fields.Latitude || '';
     const longitude = fields.longitude || fields.lng || fields.Longitude || '';
     const namaPemilik = fields['Nama Pemilik'] || fields.nama_pemilik || fields['outlet name'] || fields.outletName || '';
+    
+    // 详细的字段映射日志
+    const mappingResult = {
+      'Outlet Code': { received: fields['Outlet Code'], mapped: outletCode },
+      'latitude': { received: fields.latitude, mapped: latitude },
+      'longitude': { received: fields.longitude, mapped: longitude },  
+      'Nama Pemilik': { received: fields['Nama Pemilik'], mapped: namaPemilik }
+    };
+    
+    writeLog('info', '字段映射结果', mappingResult);
+    console.log('\n🔄 字段映射详情：');
+    console.log('- Outlet Code:', `"${fields['Outlet Code']}" → "${outletCode}"`);
+    console.log('- latitude:', `"${fields.latitude}" → "${latitude}"`);
+    console.log('- longitude:', `"${fields.longitude}" → "${longitude}"`);
+    console.log('- Nama Pemilik:', `"${fields['Nama Pemilik']}" → "${namaPemilik}"`);
     
     // 只验证必要的4个字段：Outlet Code, latitude, longitude, Nama Pemilik
     const requiredFields = [
