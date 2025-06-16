@@ -380,6 +380,87 @@ app.post('/api/feishu/batch', authenticateToken, async (req, res) => {
   }
 });
 
+// 飞书全量替换接口（完全同步模式）
+app.post('/api/feishu/replace', authenticateToken, async (req, res) => {
+  try {
+    const { data } = req.body;
+    
+    if (!Array.isArray(data)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '全量替换数据必须是数组格式' 
+      });
+    }
+    
+    writeLog('info', `收到全量替换请求，共${data.length}条记录`);
+    
+    const results = [];
+    const errors = [];
+    
+    // 验证所有数据
+    for (let i = 0; i < data.length; i++) {
+      const validation = validateData(data[i]);
+      if (!validation.valid) {
+        errors.push({ index: i, error: validation.error, data: data[i] });
+      } else {
+        results.push(convertToCSVFormat(data[i]));
+      }
+    }
+    
+    if (errors.length > 0) {
+      writeLog('error', '全量替换数据验证失败', errors);
+      return res.status(400).json({ 
+        success: false, 
+        error: '部分数据验证失败',
+        errors: errors,
+        validCount: results.length,
+        totalCount: data.length
+      });
+    }
+    
+    // 备份原文件
+    if (fs.existsSync(CONFIG.csvPath)) {
+      const backupPath = path.join(CONFIG.backupDir, 
+        `outlets_replace_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`);
+      
+      fs.copyFileSync(CONFIG.csvPath, backupPath);
+      writeLog('info', `全量替换前数据已备份到: ${backupPath}`);
+    }
+    
+    // 直接使用新数据替换所有数据
+    const csvHeader = 'shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi\n';
+    const csvContent = csvHeader + results.map(row => 
+      `${row.shop_code},${row.latitude},${row.longitude},"${row['outlet name']}","${row.brand}","${row.kecamatan}","${row.potensi}"`
+    ).join('\n');
+    
+    fs.writeFileSync(CONFIG.csvPath, csvContent, 'utf8');
+    
+    // 更新统计信息
+    stats.totalRequests++;
+    stats.successfulUpdates++;
+    stats.lastUpdate = new Date().toISOString();
+    
+    writeLog('info', `全量替换完成 - 新数据条数: ${results.length}，已完全覆盖原有数据`);
+    
+    res.json({ 
+      success: true, 
+      message: '全量数据替换完成',
+      totalRecords: results.length,
+      processedCount: results.length,
+      mode: 'complete_replace'
+    });
+    
+  } catch (error) {
+    stats.errorCount++;
+    writeLog('error', '处理全量替换时出错', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: '服务器内部错误',
+      details: error.message 
+    });
+  }
+});
+
 // API路由：导出CSV数据
 app.get('/api/data/csv', async (req, res) => {
   try {
@@ -456,6 +537,173 @@ app.get('/health', (req, res) => {
     timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
     uptime: process.uptime()
   });
+});
+
+// 简化的Webhook端点（专为飞书自动化设计）
+app.post('/webhook', async (req, res) => {
+  try {
+    writeLog('info', '收到飞书自动化Webhook数据', JSON.stringify(req.body));
+    
+    // 从飞书自动化获取的数据格式
+    const { record } = req.body;
+    if (!record || !record.fields) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '数据格式错误：需要record.fields结构' 
+      });
+    }
+    
+    const fields = record.fields;
+    
+    // 验证必要字段
+    if (!fields.latitude || !fields.longitude) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '缺少必要的经纬度信息' 
+      });
+    }
+    
+    // 验证经纬度格式
+    const lat = parseFloat(fields.latitude);
+    const lng = parseFloat(fields.longitude);
+    
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '纬度格式错误，必须在-90到90之间' 
+      });
+    }
+    
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '经度格式错误，必须在-180到180之间' 
+      });
+    }
+    
+    // 转换为CSV格式
+    const newData = {
+      shop_code: fields.shop_code || '',
+      latitude: lat,
+      longitude: lng,
+      'outlet name': fields['outlet name'] || '',
+      brand: fields.brand || '',
+      kecamatan: fields.kecamatan || '',
+      potensi: fields.potensi || ''
+    };
+    
+    // 读取现有数据
+    let existingData = [];
+    if (fs.existsSync(CONFIG.csvPath)) {
+      const csvContent = fs.readFileSync(CONFIG.csvPath, 'utf8');
+      existingData = parseCSV(csvContent);
+    }
+    
+    // 查找是否已存在相同的shop_code
+    let addedCount = 0;
+    let updatedCount = 0;
+    
+    if (newData.shop_code) {
+      const existingIndex = existingData.findIndex(row => 
+        row.shop_code === newData.shop_code
+      );
+      
+      if (existingIndex !== -1) {
+        existingData[existingIndex] = newData;
+        updatedCount = 1;
+      } else {
+        existingData.push(newData);
+        addedCount = 1;
+      }
+    } else {
+      existingData.push(newData);
+      addedCount = 1;
+    }
+    
+    // 写入更新后的数据
+    const csvHeader = 'shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi\n';
+    const csvContent = csvHeader + existingData.map(row => 
+      `${row.shop_code},${row.latitude},${row.longitude},"${row['outlet name']}","${row.brand}","${row.kecamatan}","${row.potensi}"`
+    ).join('\n');
+    
+    fs.writeFileSync(CONFIG.csvPath, csvContent, 'utf8');
+    
+    // 更新统计信息
+    stats.totalRequests++;
+    stats.successfulUpdates++;
+    stats.lastUpdate = new Date().toISOString();
+    
+    const action = updatedCount > 0 ? 'updated' : 'added';
+    writeLog('info', `数据${action === 'updated' ? '更新' : '添加'}成功`, newData);
+    
+    res.json({ 
+      success: true, 
+      message: `数据${action === 'updated' ? '更新' : '添加'}成功`,
+      action: action,
+      data: newData,
+      totalRecords: existingData.length
+    });
+    
+  } catch (error) {
+    stats.errorCount++;
+    writeLog('error', 'Webhook处理失败', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: '服务器内部错误',
+      details: error.message 
+    });
+  }
+});
+
+// 数据清空端点
+app.post('/api/data/clear', async (req, res) => {
+  try {
+    const { confirm } = req.body;
+    
+    if (!confirm) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '需要确认参数' 
+      });
+    }
+    
+    // 备份现有数据
+    let clearedCount = 0;
+    if (fs.existsSync(CONFIG.csvPath)) {
+      const csvContent = fs.readFileSync(CONFIG.csvPath, 'utf8');
+      const existingData = parseCSV(csvContent);
+      clearedCount = existingData.length;
+      
+      // 创建备份
+      const backupPath = path.join(CONFIG.backupDir, 
+        `clear_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`);
+      fs.copyFileSync(CONFIG.csvPath, backupPath);
+      writeLog('info', `清空前数据已备份到: ${backupPath}`);
+    }
+    
+    // 重置为只有表头的状态
+    const emptyCSV = 'shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi\n';
+    fs.writeFileSync(CONFIG.csvPath, emptyCSV, 'utf8');
+    
+    // 重置统计信息
+    stats.lastUpdate = new Date().toISOString();
+    
+    writeLog('info', `数据清空完成，清空了${clearedCount}条记录`);
+    
+    res.json({ 
+      success: true, 
+      message: '数据清空完成',
+      clearedCount: clearedCount
+    });
+    
+  } catch (error) {
+    writeLog('error', '数据清空失败', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: '服务器内部错误',
+      details: error.message 
+    });
+  }
 });
 
 // 根路径
