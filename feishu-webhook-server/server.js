@@ -37,7 +37,7 @@ const stats = {
 
 // 配置文件路径
 const CONFIG = {
-  csvPath: path.join(__dirname, '../public/data/outlets.csv'),
+  csvPath: path.join(__dirname, '../public/markers.csv'),
   backupDir: path.join(__dirname, 'backups'),
   logDir: path.join(__dirname, 'logs'),
   apiToken: process.env.API_TOKEN || 'your-super-secret-token'
@@ -86,17 +86,45 @@ function parseCSV(csvContent) {
   const lines = csvContent.trim().split('\n');
   if (lines.length <= 1) return [];
   
-  const headers = lines[0].split(',').map(h => h.trim());
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
   const data = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
-    const row = {};
+    const line = lines[i].trim();
+    if (!line) continue; // 跳过空行
     
+    // 解析CSV行，处理引号内的逗号
+    const values = [];
+    let inQuotes = false;
+    let currentValue = '';
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(currentValue.trim());
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+    }
+    values.push(currentValue.trim()); // 添加最后一个值
+    
+    // 检查是否为有效记录（至少有shop_code或经纬度）
+    const shop_code = values[0] ? values[0].replace(/"/g, '').trim() : '';
+    const latitude = values[1] ? values[1].replace(/"/g, '').trim() : '';
+    const longitude = values[2] ? values[2].replace(/"/g, '').trim() : '';
+    
+    // 跳过完全空的记录
+    if (!shop_code && !latitude && !longitude) {
+      continue;
+    }
+    
+    const row = {};
     headers.forEach((header, index) => {
       let value = values[index] || '';
-      // 移除引号
-      value = value.replace(/^"|"$/g, '').trim();
+      value = value.replace(/^"|"$/g, '').trim(); // 移除引号
       row[header] = value;
     });
     
@@ -135,13 +163,13 @@ function validateData(data) {
 // 转换数据格式以兼容现有CSV结构
 function convertToCSVFormat(data) {
   return {
-    shop_code: data.outlet_code || '',
+    shop_code: data.outlet_code || data.shop_code || '',
     latitude: parseFloat(data.latitude) || 0,
     longitude: parseFloat(data.longitude) || 0,
-    outlet_name: data.nama_pemilik || '',
-    brand: 'Other',  // 默认品牌
-    kecamatan: 'Unknown',  // 默认区域
-    potensi: ''  // 默认无潜力标记
+    'outlet name': data.nama_pemilik || data.outlet_name || data['outlet name'] || '',
+    brand: data.brand || 'Other',  // 默认品牌
+    kecamatan: data.kecamatan || 'Unknown',  // 默认区域
+    potensi: data.potensi || ''  // 默认无潜力标记
   };
 }
 
@@ -211,9 +239,9 @@ app.post('/api/feishu/webhook', authenticateToken, async (req, res) => {
     }
     
     // 写入更新后的数据
-    const csvHeader = 'shop_code,latitude,longitude,outlet_name,brand,kecamatan,potensi\n';
+    const csvHeader = 'shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi\n';
     const csvContent = csvHeader + existingData.map(row => 
-      `${row.shop_code},${row.latitude},${row.longitude},"${row.outlet_name}","${row.brand}","${row.kecamatan}","${row.potensi}"`
+      `${row.shop_code},${row.latitude},${row.longitude},"${row['outlet name']}","${row.brand}","${row.kecamatan}","${row.potensi}"`
     ).join('\n');
     
     fs.writeFileSync(CONFIG.csvPath, csvContent, 'utf8');
@@ -318,9 +346,9 @@ app.post('/api/feishu/batch', authenticateToken, async (req, res) => {
     });
     
     // 写入更新后的数据
-    const csvHeader = 'shop_code,latitude,longitude,outlet_name,brand,kecamatan,potensi\n';
+    const csvHeader = 'shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi\n';
     const csvContent = csvHeader + existingData.map(row => 
-      `${row.shop_code},${row.latitude},${row.longitude},"${row.outlet_name}","${row.brand}","${row.kecamatan}","${row.potensi}"`
+      `${row.shop_code},${row.latitude},${row.longitude},"${row['outlet name']}","${row.brand}","${row.kecamatan}","${row.potensi}"`
     ).join('\n');
     
     fs.writeFileSync(CONFIG.csvPath, csvContent, 'utf8');
@@ -344,6 +372,37 @@ app.post('/api/feishu/batch', authenticateToken, async (req, res) => {
   } catch (error) {
     stats.errorCount++;
     writeLog('error', '处理批量数据时出错', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: '服务器内部错误',
+      details: error.message 
+    });
+  }
+});
+
+// API路由：导出CSV数据
+app.get('/api/data/csv', async (req, res) => {
+  try {
+    if (!fs.existsSync(CONFIG.csvPath)) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'CSV文件不存在' 
+      });
+    }
+    
+    const csvContent = fs.readFileSync(CONFIG.csvPath, 'utf8');
+    
+    // 设置响应头
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="markers.csv"');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    res.send(csvContent);
+    
+    writeLog('info', 'CSV数据导出请求完成');
+    
+  } catch (error) {
+    writeLog('error', 'CSV数据导出失败', error.message);
     res.status(500).json({ 
       success: false, 
       error: '服务器内部错误',
