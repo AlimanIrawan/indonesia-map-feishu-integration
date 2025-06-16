@@ -309,13 +309,22 @@ function App() {
   
   // 加载可用区域名称
   useEffect(() => {
-    const csvUrl = `${window.location.origin}/markers.csv?t=${new Date().getTime()}`;
+    // 强制只从Render服务器读取区域数据
+    const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
     
-    fetch(csvUrl)
+    console.log('🔍 从Render服务器加载区域名称...');
+    
+    fetch(renderUrl, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(response => {
         if (!response.ok) {
-          throw new Error('无法加载标记点数据');
+          throw new Error(`Render服务器响应错误: ${response.status}`);
         }
+        console.log('✅ 成功从Render服务器获取区域数据');
         return response.text();
       })
       .then(csvText => {
@@ -369,9 +378,12 @@ function App() {
         
         // 排序并设置可用区域
         setAvailableKecamatans(Array.from(kecamatans).sort());
+        console.log(`✅ 成功加载 ${kecamatans.size} 个区域名称`);
       })
       .catch(err => {
-        console.error('加载区域数据出错:', err);
+        console.error('从Render服务器加载区域数据出错:', err);
+        // 如果失败，至少提供"One Meter"选项
+        setAvailableKecamatans(["One Meter"]);
       });
   }, []);
 
@@ -421,34 +433,18 @@ function App() {
 
     const checkForUpdates = async () => {
       try {
-        // 优先从Render服务器检查更新，如果失败则检查本地文件
+        // 强制只从Render服务器检查更新
         const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
-        const localUrl = `${window.location.origin}/markers.csv`;
         
-        let response;
-        let dataSource = '';
+        console.log('🔍 检查Render服务器数据更新...');
         
-        try {
-          // 尝试从Render服务器检查更新
-          response = await fetch(renderUrl, {
-            method: 'HEAD',
-            cache: 'no-cache'
-          });
-          
-          if (response.ok) {
-            dataSource = 'Render服务器';
-          } else {
-            throw new Error('Render服务器检查失败');
+        const response = await fetch(renderUrl, {
+          method: 'HEAD',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache'
           }
-        } catch (error) {
-          // 如果Render失败，检查本地文件
-          console.log('⚠️ Render服务器检查失败，检查本地文件');
-          response = await fetch(localUrl, {
-            method: 'HEAD',
-            cache: 'no-cache'
-          });
-          dataSource = '本地文件';
-        }
+        });
         
         if (response.ok) {
           const lastModified = response.headers.get('Last-Modified');
@@ -457,12 +453,12 @@ function App() {
             
             // 如果文件时间比上次记录的时间新，则重新加载数据
             if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
-              console.log(`检测到${dataSource}数据更新，正在重新加载...`);
+              console.log('🔄 检测到Render服务器数据更新，正在重新加载...');
               setDataUpdateCount(prev => prev + 1);
               
               // 显示更新提示
               const updateNotification = document.createElement('div');
-              updateNotification.textContent = `检测到新数据（${dataSource}），正在更新地图...`;
+              updateNotification.textContent = '检测到新数据（Render服务器），正在更新地图...';
               updateNotification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -490,9 +486,11 @@ function App() {
             
             setLastUpdateTime(fileTime);
           }
+        } else {
+          console.log('⚠️ Render服务器检查失败:', response.status);
         }
       } catch (error) {
-        console.log('检查数据更新时出错:', error);
+        console.log('检查Render服务器更新时出错:', error);
         // 静默处理错误，不影响正常使用
       }
     };
@@ -510,17 +508,23 @@ function App() {
   const loadMarkerData = (kecamatanValue: string) => {
     setIsLoading(true);
     
-    // 优先从Render服务器读取最新数据，如果失败则使用本地文件
+    // 强制只从Render服务器读取数据
     const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
-    const localUrl = `${window.location.origin}/markers.csv?t=${new Date().getTime()}`;
     
-    // 尝试从Render服务器获取数据
-    fetch(renderUrl)
+    console.log('🌐 强制从Render服务器获取数据...');
+    
+    // 只从Render服务器获取数据
+    fetch(renderUrl, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(response => {
         if (!response.ok) {
-          throw new Error('Render服务器数据获取失败，尝试本地数据');
+          throw new Error(`Render服务器响应错误: ${response.status}`);
         }
-        console.log('✅ 从Render服务器获取最新数据');
+        console.log('✅ 成功从Render服务器获取数据');
         
         // 记录文件的最后修改时间
         const lastModified = response.headers.get('Last-Modified');
@@ -532,30 +536,9 @@ function App() {
         
         return response.text();
       })
-      .catch(error => {
-        console.log('⚠️ Render服务器数据获取失败，使用本地数据:', error.message);
-        
-        // 如果Render服务器失败，使用本地文件
-        return fetch(localUrl)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('无法加载标记点数据');
-            }
-            
-            console.log('📄 使用本地CSV数据');
-            
-            // 记录文件的最后修改时间
-            const lastModified = response.headers.get('Last-Modified');
-            if (lastModified) {
-              setLastUpdateTime(new Date(lastModified).getTime());
-            } else {
-              setLastUpdateTime(Date.now());
-            }
-            
-            return response.text();
-          });
-      })
       .then(csvText => {
+        console.log('📊 Render CSV数据:', csvText.substring(0, 200) + '...');
+        
         const lines = csvText.split('\n');
         const brandStats: { [key: string]: number } = {};
         const multiBrandLocations: string[][] = [];
@@ -642,6 +625,8 @@ function App() {
             !isNaN(marker.longitude)
           );
 
+        console.log(`✅ 成功解析 ${parsedMarkers.length} 条数据记录`);
+
         // 保存所有标记点数据
         setOriginalMarkers(parsedMarkers);
         
@@ -661,9 +646,33 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('加载数据出错:', err);
-        setError(`加载标记点数据时出错: ${err.message}`);
+        console.error('从Render服务器加载数据出错:', err);
+        setError(`无法从Render服务器加载数据: ${err.message}`);
         setIsLoading(false);
+        
+        // 显示错误提示
+        const errorNotification = document.createElement('div');
+        errorNotification.textContent = `数据加载失败: ${err.message}`;
+        errorNotification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #f44336;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 10000;
+          font-size: 14px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(errorNotification);
+        
+        // 5秒后移除提示
+        setTimeout(() => {
+          if (document.body.contains(errorNotification)) {
+            document.body.removeChild(errorNotification);
+          }
+        }, 5000);
       });
   };
   
