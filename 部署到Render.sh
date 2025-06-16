@@ -13,6 +13,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# 获取脚本所在目录
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_DIR="$SCRIPT_DIR"
+
+echo -e "${BLUE}📂 脚本位置: $SCRIPT_DIR${NC}"
+echo -e "${BLUE}📂 项目目录: $PROJECT_DIR${NC}"
+
+# 切换到项目目录
+cd "$PROJECT_DIR"
+
 # 检查必要的工具
 echo -e "${BLUE}📋 检查系统环境...${NC}"
 
@@ -40,6 +50,9 @@ echo -e "${BLUE}📂 检查项目结构...${NC}"
 
 if [ ! -d "feishu-webhook-server" ]; then
     echo -e "${RED}❌ 找不到feishu-webhook-server目录${NC}"
+    echo -e "${YELLOW}当前目录: $(pwd)${NC}"
+    echo -e "${YELLOW}目录内容:${NC}"
+    ls -la
     exit 1
 fi
 
@@ -72,64 +85,45 @@ else
     echo -e "${GREEN}✅ 依赖包已安装${NC}"
 fi
 
-cd ..
+cd "$PROJECT_DIR"
 
 # 检查Git仓库状态
 echo -e "${BLUE}🔍 检查Git仓库状态...${NC}"
 
 if [ ! -d ".git" ]; then
-    echo -e "${YELLOW}⚠️  尚未初始化Git仓库${NC}"
-    echo -e "${BLUE}🔧 正在初始化Git仓库...${NC}"
+    echo -e "${RED}❌ 项目尚未初始化为Git仓库${NC}"
+    echo -e "${YELLOW}请先运行「首次推送到Git.sh」完成Git初始化${NC}"
+    exit 1
+fi
+
+# 检查是否有远程仓库
+if ! git remote -v | grep -q "origin"; then
+    echo -e "${RED}❌ 远程仓库未配置${NC}"
+    echo -e "${YELLOW}请先运行「首次推送到Git.sh」完成Git配置${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Git仓库配置正常${NC}"
+
+# 检查是否有未提交的更改
+if [ -n "$(git status --porcelain)" ]; then
+    echo -e "${YELLOW}⚠️  检测到未提交的更改${NC}"
+    echo -e "${BLUE}🔧 正在提交更改...${NC}"
     
-    git init
     git add .
-    git commit -m "Initial commit for Render deployment"
+    git commit -m "Update for Render deployment - $(date '+%Y-%m-%d %H:%M:%S')"
     
-    echo -e "${GREEN}✅ Git仓库初始化完成${NC}"
-    
-    echo -e "${YELLOW}📢 重要提醒：${NC}"
-    echo "1. 请登录GitHub创建一个新的仓库"
-    echo "2. 复制仓库的HTTPS地址"
-    echo "3. 然后运行以下命令："
-    echo ""
-    echo -e "${BLUE}git remote add origin YOUR_GITHUB_REPO_URL${NC}"
-    echo -e "${BLUE}git branch -M main${NC}"
-    echo -e "${BLUE}git push -u origin main${NC}"
-    echo ""
-    
+    echo -e "${GREEN}✅ 更改已提交${NC}"
+fi
+
+echo -e "${BLUE}🚀 正在推送到远程仓库...${NC}"
+git push origin main
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ 代码推送成功${NC}"
 else
-    echo -e "${GREEN}✅ Git仓库已存在${NC}"
-    
-    # 检查是否有未提交的更改
-    if [ -n "$(git status --porcelain)" ]; then
-        echo -e "${YELLOW}⚠️  检测到未提交的更改${NC}"
-        echo -e "${BLUE}🔧 正在提交更改...${NC}"
-        
-        git add .
-        git commit -m "Update for Render deployment - $(date '+%Y-%m-%d %H:%M:%S')"
-        
-        echo -e "${GREEN}✅ 更改已提交${NC}"
-    fi
-    
-    # 检查远程仓库
-    if git remote -v | grep -q "origin"; then
-        echo -e "${GREEN}✅ 远程仓库已配置${NC}"
-        
-        echo -e "${BLUE}🚀 正在推送到远程仓库...${NC}"
-        git push origin main
-        
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✅ 代码推送成功${NC}"
-        else
-            echo -e "${RED}❌ 代码推送失败，请检查网络连接和权限${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${YELLOW}⚠️  尚未配置远程仓库${NC}"
-        echo -e "${YELLOW}📢 请先配置远程仓库：${NC}"
-        echo -e "${BLUE}git remote add origin YOUR_GITHUB_REPO_URL${NC}"
-        exit 1
-    fi
+    echo -e "${RED}❌ 代码推送失败，请检查网络连接和权限${NC}"
+    exit 1
 fi
 
 # 显示Render部署指南
