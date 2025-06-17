@@ -1,5 +1,69 @@
 === 飞书最终配置说明 ===
 
+🎯 **现在所有服务器端都已准备就绪**：
+- ✅ Render服务正在运行
+- ✅ 环境变量GITHUB_TOKEN已设置
+- ✅ GitHub Token有效并有正确权限
+
+🔧 **飞书自动化配置**：
+
+**第1步：打开飞书自动化**
+在飞书中找到之前创建的自动化流程
+
+**第2步：编辑HTTP请求节点**
+找到"发送HTTP请求"的节点，修改以下设置：
+
+```
+请求方法：POST
+请求URL：https://indonesia-map-feishu-integration.onrender.com/feishu-to-github
+```
+
+**第3步：设置请求头**
+只保留以下请求头：
+```
+Content-Type: application/json
+```
+⚠️ **重要**：删除所有其他请求头（特别是Authorization）
+
+**第4步：设置请求体**
+使用JSON格式，根据你的飞书表格前4个必填字段：
+```json
+{
+  "event_type": "feishu_update",
+  "client_payload": {
+    "shop_code": "{{shop_code}}",
+    "latitude": "{{latitude}}",
+    "longitude": "{{longitude}}",
+    "outlet_name": "{{outlet name}}"
+  }
+}
+```
+⚠️ **字段映射说明**：
+- 飞书表格中的字段名：`outlet name`（有空格）
+- JSON中的字段名：`outlet_name`（下划线）
+- GitHub Actions会自动处理这个映射，最终保存到CSV的 `outlet name` 列
+
+**第5步：响应处理**
+- 不需要设置特殊的响应处理
+- 中转服务器会返回JSON格式的响应
+
+**第6步：保存并测试**
+1. 保存自动化配置
+2. 手动触发一次测试
+3. 检查是否收到成功响应
+
+🎉 **预期结果**：
+- 飞书自动化不再报错
+- GitHub Actions会被正确触发
+- 地图数据会自动更新
+
+📝 **配置要点总结**：
+- URL：https://indonesia-map-feishu-integration.onrender.com/feishu-to-github
+- 方法：POST
+- 请求头：只要Content-Type: application/json
+- 请求体：JSON格式的地点数据
+- 无需设置GitHub Token（服务器端处理）
+
 ✅ **Render配置已更新完成！**
 
 🔧 **已完成的更改**：
@@ -36,7 +100,7 @@ https://feishu-github-proxy-xxx.onrender.com
 🔄 **修改飞书自动化**：
 1. **URL改为**：
    ```
-   https://你的域名.onrender.com/feishu-to-github
+   https://indonesia-map-feishu-integration.onrender.com/feishu-to-github
    ```
 
 2. **请求头设置**：
@@ -46,12 +110,12 @@ https://feishu-github-proxy-xxx.onrender.com
 3. **请求体保持不变**：
    ```json
    {
-     "event_type": "feishu-data-update", 
+     "event_type": "feishu_update",
      "client_payload": {
-       "shop_code": "{{第1步满足条件... At Outlet Code}}",
-       "latitude": "{{第1步满足条件... 5, latitude}}",
-       "longitude": "{{第1步满足条件... 5, longitude}}",
-       "outlet_name": "{{第1步满足条件... At Nama Pemilik}}"
+       "shop_code": "{{shop_code}}",
+       "latitude": "{{latitude}}",
+       "longitude": "{{longitude}}",
+       "outlet_name": "{{outlet name}}"
      }
    }
    ```

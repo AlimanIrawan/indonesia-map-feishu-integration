@@ -1,0 +1,49 @@
+=== Render环境变量紧急修复 ===
+
+🚨 **问题确认**：
+- ✅ Render服务正在运行
+- ✅ 自动部署工作正常
+- ❌ 环境变量GITHUB_TOKEN未设置
+- ❌ 导致/feishu-to-github接口无法工作
+
+🔧 **立即修复步骤**：
+
+**第1步：登录Render控制台**
+访问：https://dashboard.render.com
+
+**第2步：找到服务**
+找到服务：indonesia-map-feishu-integration
+
+**第3步：设置环境变量**
+1. 点击服务名称进入详情页
+2. 点击"Environment"选项卡
+3. 点击"Add Environment Variable"
+4. 添加：
+   ```
+   Key: GITHUB_TOKEN
+   Value: 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
+   ```
+5. 点击"Save Changes"
+
+**第4步：重新部署**
+1. 回到服务主页
+2. 点击"Manual Deploy"
+3. 选择"Deploy latest commit"
+4. 等待部署完成
+
+**第5步：验证修复**
+部署完成后，运行：
+```bash
+./检查Render部署状态.sh
+```
+
+🎯 **预期结果**：
+设置环境变量后，/feishu-to-github接口应该能正常工作
+
+⚠️ **重要提醒**：
+- 环境变量设置后需要重新部署才能生效
+- 不要在代码中硬编码敏感信息
+- 确保Token有正确的权限（repo, workflow）
+
+📝 **下一步**：
+环境变量设置完成后，就可以在飞书中测试完整的自动化流程了。 
