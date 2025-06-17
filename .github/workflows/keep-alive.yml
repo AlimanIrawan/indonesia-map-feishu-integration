@@ -16,25 +16,16 @@ jobs:
         # 使用正确的Render服务地址
         SERVICE_URL="https://indonesia-map-feishu-integration.onrender.com"
         
-        echo "正在ping服务: $SERVICE_URL/health"
+        echo "正在ping服务: $SERVICE_URL"
         
-        response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/health")
+        response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL")
         
         if [ $response -eq 200 ]; then
           echo "✅ 服务运行正常 (HTTP $response)"
         else
           echo "⚠️ 服务响应异常 (HTTP $response)"
-          exit 1
-        fi
-        
-        # 同时ping根路径
-        echo "正在ping根路径: $SERVICE_URL"
-        root_response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL")
-        
-        if [ $root_response -eq 200 ]; then
-          echo "✅ 根路径响应正常 (HTTP $root_response)"
-        else
-          echo "⚠️ 根路径响应异常 (HTTP $root_response)"
+          # 不要因为服务异常而失败，因为可能是服务正在启动
+          echo "继续执行，可能服务正在启动中"
         fi
         
         echo "Keep-alive任务完成" 
