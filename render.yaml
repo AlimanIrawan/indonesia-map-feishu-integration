@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: feishu-github-proxy
+    name: indonesia-map-feishu-integration
     env: node
     plan: free
     buildCommand: npm install
