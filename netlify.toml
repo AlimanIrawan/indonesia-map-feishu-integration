@@ -6,7 +6,11 @@
   from = "/api/markers.csv"
   to = "https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv"
   status = 200
-  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [[headers]]
   for = "/api/markers.csv"
@@ -18,9 +22,4 @@
   for = "/markers.csv"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Content-Type = "text/csv"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200 
+    Content-Type = "text/csv" 
