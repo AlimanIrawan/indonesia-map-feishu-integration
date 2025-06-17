@@ -1,109 +1,82 @@
-name: 更新飞书数据到地图CSV
+name: 更新飞书数据到CSV
 
 on:
   repository_dispatch:
-    types: [feishu-data-update]
+    types: [feishu_update]
 
 jobs:
   update-csv:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 检出仓库代码
+    - name: 检出代码
       uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: 设置Git用户信息
+      
+    - name: 解析飞书数据
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        echo "=== 解析飞书数据 ==="
         
-    - name: 处理飞书推送的数据
-      run: |
-        echo "收到飞书数据推送"
-        echo "数据内容: ${{ toJson(github.event.client_payload) }}"
-        
-        # 提取数据字段
+        # 从GitHub dispatch事件中提取数据
         SHOP_CODE="${{ github.event.client_payload.shop_code }}"
-        LATITUDE_RAW="${{ github.event.client_payload.latitude }}"
-        LONGITUDE_RAW="${{ github.event.client_payload.longitude }}"
+        LATITUDE="${{ github.event.client_payload.latitude }}"
+        LONGITUDE="${{ github.event.client_payload.longitude }}"
         OUTLET_NAME="${{ github.event.client_payload.outlet_name }}"
-        BRAND="${{ github.event.client_payload.brand }}"
-        KECAMATAN="${{ github.event.client_payload.kecamatan }}"
-        POTENSI="${{ github.event.client_payload.potensi }}"
         
-        # 检查必要字段是否存在
-        if [ -z "$SHOP_CODE" ] || [ -z "$LATITUDE_RAW" ] || [ -z "$LONGITUDE_RAW" ]; then
-          echo "❌ 错误：缺少必要字段 shop_code, latitude, longitude"
+        echo "原始数据:"
+        echo "  shop_code: $SHOP_CODE"
+        echo "  latitude: $LATITUDE"
+        echo "  longitude: $LONGITUDE"
+        echo "  outlet_name: $OUTLET_NAME"
+        
+        # 验证必填字段
+        if [ -z "$SHOP_CODE" ] || [ -z "$LATITUDE" ] || [ -z "$LONGITUDE" ] || [ -z "$OUTLET_NAME" ]; then
+          echo "❌ 错误：缺少必填字段"
+          echo "必填字段：shop_code, latitude, longitude, outlet_name"
           exit 1
         fi
         
-        # 清理和验证纬度经度数据（处理文本格式）
-        # 移除可能的空格和非数字字符（保留小数点和负号）
-        LATITUDE=$(echo "$LATITUDE_RAW" | sed 's/[^0-9.-]//g')
-        LONGITUDE=$(echo "$LONGITUDE_RAW" | sed 's/[^0-9.-]//g')
+        # 验证并处理纬度经度数据
+        echo "=== 处理坐标数据 ==="
         
-        # 验证纬度经度是否为有效数字
-        if ! [[ "$LATITUDE" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
-          echo "❌ 错误：纬度格式无效: $LATITUDE_RAW -> $LATITUDE"
+        # 移除引号和空格，转换为纯数字
+        LATITUDE_CLEAN=$(echo "$LATITUDE" | sed 's/["\s]//g')
+        LONGITUDE_CLEAN=$(echo "$LONGITUDE" | sed 's/["\s]//g')
+        
+        echo "纬度: \"$LATITUDE\" -> $LATITUDE_CLEAN"
+        echo "经度: \"$LONGITUDE\" -> $LONGITUDE_CLEAN"
+        
+        # 验证是否为有效数字
+        if ! [[ "$LATITUDE_CLEAN" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
+          echo "❌ 纬度格式无效: $LATITUDE_CLEAN"
           exit 1
         fi
         
-        if ! [[ "$LONGITUDE" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
-          echo "❌ 错误：经度格式无效: $LONGITUDE_RAW -> $LONGITUDE"
+        if ! [[ "$LONGITUDE_CLEAN" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
+          echo "❌ 经度格式无效: $LONGITUDE_CLEAN"
           exit 1
-        fi
-        
-        # 验证纬度经度范围（印尼地区）
-        # 纬度: -11 到 6 度
-        # 经度: 95 到 141 度
-        if (( $(echo "$LATITUDE < -11 || $LATITUDE > 6" | bc -l) )); then
-          echo "⚠️  警告：纬度超出印尼范围: $LATITUDE"
-        fi
-        
-        if (( $(echo "$LONGITUDE < 95 || $LONGITUDE > 141" | bc -l) )); then
-          echo "⚠️  警告：经度超出印尼范围: $LONGITUDE"
         fi
         
         echo "✅ 数据验证通过"
-        echo "店铺代码: $SHOP_CODE"
-        echo "纬度: $LATITUDE_RAW -> $LATITUDE"
-        echo "经度: $LONGITUDE_RAW -> $LONGITUDE"
-        echo "店铺名称: $OUTLET_NAME"
-        echo "品牌: $BRAND"
-        echo "区域: $KECAMATAN"
-        echo "潜力: $POTENSI"
         
-        # 将处理后的数据导出给后续步骤使用
+        # 设置环境变量供后续步骤使用
         echo "SHOP_CODE=$SHOP_CODE" >> $GITHUB_ENV
-        echo "LATITUDE=$LATITUDE" >> $GITHUB_ENV
-        echo "LONGITUDE=$LONGITUDE" >> $GITHUB_ENV
+        echo "LATITUDE=$LATITUDE_CLEAN" >> $GITHUB_ENV
+        echo "LONGITUDE=$LONGITUDE_CLEAN" >> $GITHUB_ENV
         echo "OUTLET_NAME=$OUTLET_NAME" >> $GITHUB_ENV
-        echo "BRAND=$BRAND" >> $GITHUB_ENV
-        echo "KECAMATAN=$KECAMATAN" >> $GITHUB_ENV
-        echo "POTENSI=$POTENSI" >> $GITHUB_ENV
         
     - name: 更新CSV文件
       run: |
         # 确保CSV文件存在
         if [ ! -f "public/markers.csv" ]; then
-          echo "shop_code,latitude,longitude,outlet name,brand,kecamatan,potensi" > public/markers.csv
+          echo "shop_code,latitude,longitude,outlet_name" > public/markers.csv
           echo "📝 创建新的CSV文件"
         fi
         
-        # 使用环境变量中的处理后数据
-        # 处理空值和特殊字符
+        # 处理outlet_name中的特殊字符
         OUTLET_NAME_CLEAN=$(echo "$OUTLET_NAME" | sed 's/,/，/g' | sed 's/"//g')
-        BRAND_CLEAN=$(echo "$BRAND" | sed 's/,/，/g' | sed 's/"//g')
-        KECAMATAN_CLEAN=$(echo "$KECAMATAN" | sed 's/,/，/g' | sed 's/"//g')
-        POTENSI_CLEAN=$(echo "$POTENSI" | sed 's/,/，/g' | sed 's/"//g')
         
         # 设置默认值
         OUTLET_NAME_CLEAN=${OUTLET_NAME_CLEAN:-""}
-        BRAND_CLEAN=${BRAND_CLEAN:-""}
-        KECAMATAN_CLEAN=${KECAMATAN_CLEAN:-""}
-        POTENSI_CLEAN=${POTENSI_CLEAN:-""}
         
         # 检查是否已存在该shop_code的记录
         if grep -q "^$SHOP_CODE," public/markers.csv; then
@@ -115,11 +88,11 @@ jobs:
           echo "➕ 添加新记录: $SHOP_CODE"
         fi
         
-        # 添加新记录（使用处理后的数据）
-        echo "$SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN,$BRAND_CLEAN,$KECAMATAN_CLEAN,$POTENSI_CLEAN" >> public/markers.csv
+        # 添加新记录
+        echo "$SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN" >> public/markers.csv
         
         echo "✅ CSV文件更新完成"
-        echo "📊 添加的记录: $SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN,$BRAND_CLEAN,$KECAMATAN_CLEAN,$POTENSI_CLEAN"
+        echo "📊 添加的记录: $SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN"
         
         # 显示更新后的文件行数
         LINE_COUNT=$(wc -l < public/markers.csv)
@@ -131,39 +104,8 @@ jobs:
         
     - name: 提交更改到仓库
       run: |
-        # 检查是否有变更
-        if git diff --quiet; then
-          echo "📝 没有检测到文件变更"
-        else
-          echo "💾 检测到文件变更，准备提交"
-          git add public/markers.csv
-          
-          # 创建提交信息
-          CURRENT_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          
-          git commit -m "🏪 飞书自动更新: $SHOP_CODE - $OUTLET_NAME
-
-          数据详情:
-          - 店铺代码: $SHOP_CODE
-          - 经纬度: $LATITUDE, $LONGITUDE
-          - 店铺名称: $OUTLET_NAME
-          - 品牌: $BRAND
-          - 区域: $KECAMATAN
-          - 潜力: $POTENSI
-          
-          更新时间: $CURRENT_TIME"
-          
-          git push
-          
-          echo "✅ 更改已提交并推送到仓库"
-        fi
-        
-    - name: 输出操作结果
-      run: |
-        echo ""
-        echo "🎉 飞书数据处理完成！"
-        echo "📍 数据已更新到: public/markers.csv"
-        echo "🗺️  地图坐标: ($LATITUDE, $LONGITUDE)"
-        echo "🌐 Netlify将自动检测到文件变化并重新部署"
-        echo "🔗 查看更新后的地图: https://indonesia-map-feishu-integration.netlify.app"
-        echo "" 
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add public/markers.csv
+        git commit -m "飞书数据更新: 添加/更新门店 $SHOP_CODE" || echo "没有变更需要提交"
+        git push 

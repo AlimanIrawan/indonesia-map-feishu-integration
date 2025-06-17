@@ -34,23 +34,22 @@ app.post('/webhook', async (req, res) => {
         
         const data = req.body;
         
-        // 验证数据格式
-        if (!data || !data.name || !data.latitude || !data.longitude) {
+        // 验证数据格式 - 统一使用四个字段
+        if (!data || !data.shop_code || !data.latitude || !data.longitude || !data.outlet_name) {
             log('数据格式不正确');
             return res.status(400).json({
                 success: false,
-                error: '数据格式不正确，需要包含 name, latitude, longitude'
+                error: '数据格式不正确，需要包含 shop_code, latitude, longitude, outlet_name'
             });
         }
         
-        // 准备地点数据
+        // 准备地点数据 - 统一字段格式
         const markerData = {
             id: Date.now(),
-            name: data.name,
+            shop_code: data.shop_code,
             latitude: parseFloat(data.latitude),
             longitude: parseFloat(data.longitude),
-            description: data.description || '',
-            category: data.category || 'default',
+            outlet_name: data.outlet_name,
             timestamp: new Date().toISOString()
         };
         
@@ -79,8 +78,17 @@ app.post('/webhook', async (req, res) => {
             markers = [];
         }
         
-        // 添加新标记
-        markers.push(markerData);
+        // 检查是否已存在相同shop_code的记录
+        const existingIndex = markers.findIndex(marker => marker.shop_code === data.shop_code);
+        if (existingIndex !== -1) {
+            // 更新现有记录
+            markers[existingIndex] = markerData;
+            log(`更新现有记录: ${data.shop_code}`);
+        } else {
+            // 添加新标记
+            markers.push(markerData);
+            log(`添加新记录: ${data.shop_code}`);
+        }
         
         // 写入更新后的数据
         try {
