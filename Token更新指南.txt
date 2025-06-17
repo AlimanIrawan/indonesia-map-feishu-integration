@@ -1,0 +1,39 @@
+## GitHub Token更新指南
+
+### ✅ 新Token验证状态：
+- 身份验证：通过
+- 权限验证：repository_dispatch权限正常
+- API调用：正常
+
+### 📍 需要更新Token的位置：
+
+#### 1. Render环境变量
+- 登录 https://render.com
+- 进入 feishu-webhook-server 服务
+- Environment 标签页
+- 设置 GITHUB_TOKEN = [你的新Token]
+- 保存后自动重新部署
+
+#### 2. 飞书自动化配置
+- 在飞书HTTP请求头中
+- 更新 Authorization: token [你的新Token]
+
+### 🔍 Token失效的常见原因：
+
+1. **过期设置**：Token设置了过期时间
+2. **权限变更**：仓库或Token权限被修改
+3. **安全检测**：GitHub检测到异常使用自动吊销
+4. **账户变更**：密码修改、启用2FA等
+5. **意外删除**：在GitHub设置中误删
+
+### 💡 最佳实践：
+- 设置Token永不过期（如果允许）
+- 为Token添加描述说明用途
+- 定期检查Token状态
+- 使用环境变量存储，不要硬编码
+- 监控Token使用情况
+
+### 🚀 下一步：
+1. 在Render设置环境变量
+2. 在飞书更新请求头
+3. 测试完整数据流程 
