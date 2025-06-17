@@ -1,0 +1,36 @@
+=======================================
+CORS跨域问题解决方案
+=======================================
+
+问题描述：
+应用无法从Netlify域名直接访问GitHub Raw文件，浏览器CORS安全策略阻止跨域请求。
+
+错误信息：
+"Access to fetch at 'https://raw.githubusercontent.com/...' has been blocked by CORS policy"
+
+解决方案：
+通过Netlify代理功能重定向请求，绕过CORS限制。
+
+修复内容：
+1. 在netlify.toml中添加代理重定向配置
+2. 将应用中的所有GitHub URL改为使用代理路径 /api/markers.csv
+3. 配置适当的CORS头部
+
+技术实现：
+- 用户访问：/api/markers.csv
+- Netlify代理：自动转发到GitHub Raw文件
+- 同时添加CORS头部：Access-Control-Allow-Origin: "*"
+
+优势：
+- 完全解决CORS问题
+- 保持数据源在GitHub的优势
+- 用户无感知的代理转发
+- 维持原有的自动化流程
+
+部署状态：
+已推送到GitHub，Netlify将自动重新部署。
+等待1-2分钟后重新测试应用。
+
+测试数据：
+- 区域名称：测试区域
+- 密码：omg20250501 
