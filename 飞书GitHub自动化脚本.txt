@@ -1,0 +1,194 @@
+=== 飞书多维表格自动化脚本 ===
+
+将以下代码复制到飞书多维表格的自动化脚本中：
+
+```javascript
+async function main(event) {
+    // GitHub配置信息
+    const GITHUB_CONFIG = {
+        owner: 'AlimanIrawan',           // GitHub用户名
+        repo: 'indonesia-map-app',       // 仓库名
+        path: 'public/markers.csv',      // CSV文件路径
+        token: 'YOUR_GITHUB_TOKEN_HERE', // 需要替换为实际的GitHub Token
+        branch: 'main'                   // 分支名
+    };
+    
+    try {
+        console.log('🚀 开始处理飞书数据推送...');
+        
+        // 获取触发的记录数据
+        const record = event.record;
+        const recordId = record.recordId;
+        
+        // 提取字段数据并处理
+        const extractFieldValue = (field) => {
+            if (!field) return '';
+            if (Array.isArray(field)) return field[0]?.text || '';
+            if (typeof field === 'object' && field.text) return field.text;
+            return String(field).trim();
+        };
+        
+        // 根据您的飞书表格字段名提取数据
+        const newData = {
+            shop_code: extractFieldValue(record.fields['Outlet Code']),
+            latitude: extractFieldValue(record.fields['latitude']),
+            longitude: extractFieldValue(record.fields['longitude']),
+            outlet_name: extractFieldValue(record.fields['Nama Pemilik']),
+            brand: extractFieldValue(record.fields['brand']) || '',
+            kecamatan: extractFieldValue(record.fields['kecamatan']) || '',
+            potensi: extractFieldValue(record.fields['potensi']) || ''
+        };
+        
+        console.log('📊 提取的数据:', newData);
+        
+        // 验证必填字段
+        if (!newData.shop_code || !newData.latitude || !newData.longitude) {
+            throw new Error('缺少必填字段：shop_code、latitude或longitude');
+        }
+        
+        // 验证经纬度格式
+        const lat = parseFloat(newData.latitude);
+        const lng = parseFloat(newData.longitude);
+        if (isNaN(lat) || isNaN(lng)) {
+            throw new Error(`经纬度格式无效: ${newData.latitude}, ${newData.longitude}`);
+        }
+        
+        // 第一步：获取当前CSV文件内容
+        console.log('📥 获取当前CSV文件...');
+        const getCurrentFile = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            }
+        );
+        
+        if (!getCurrentFile.ok) {
+            throw new Error(`获取文件失败: ${getCurrentFile.status}`);
+        }
+        
+        const fileData = await getCurrentFile.json();
+        const currentContent = atob(fileData.content.replace(/\s/g, ''));
+        const currentSha = fileData.sha;
+        
+        console.log('✅ 成功获取当前文件内容');
+        
+        // 第二步：解析CSV并处理数据
+        const lines = currentContent.split('\n');
+        const headers = lines[0];
+        let dataLines = lines.slice(1).filter(line => line.trim() !== '');
+        
+        // 检查是否已存在相同shop_code的记录
+        const existingIndex = dataLines.findIndex(line => {
+            const fields = line.split(',');
+            return fields[0] === newData.shop_code;
+        });
+        
+        // 构建新的CSV行
+        const newCsvLine = [
+            newData.shop_code,
+            newData.latitude,
+            newData.longitude,
+            `"${newData.outlet_name}"`,
+            newData.brand,
+            newData.kecamatan,
+            newData.potensi
+        ].join(',');
+        
+        if (existingIndex >= 0) {
+            // 更新现有记录
+            dataLines[existingIndex] = newCsvLine;
+            console.log('🔄 更新现有记录:', newData.shop_code);
+        } else {
+            // 添加新记录
+            dataLines.push(newCsvLine);
+            console.log('➕ 添加新记录:', newData.shop_code);
+        }
+        
+        // 重新组装CSV内容
+        const newContent = [headers, ...dataLines].join('\n');
+        
+        // 第三步：更新GitHub文件
+        console.log('📤 更新GitHub文件...');
+        const updateResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `自动更新数据: ${newData.outlet_name} (${newData.shop_code})`,
+                    content: btoa(newContent),
+                    sha: currentSha,
+                    branch: GITHUB_CONFIG.branch
+                })
+            }
+        );
+        
+        if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            throw new Error(`更新文件失败: ${updateResponse.status} - ${errorData.message}`);
+        }
+        
+        const updateResult = await updateResponse.json();
+        console.log('✅ 成功更新GitHub文件');
+        console.log('🔗 提交链接:', updateResult.commit.html_url);
+        
+        // 返回成功结果
+        return {
+            success: true,
+            message: `数据已成功同步到GitHub`,
+            shop_code: newData.shop_code,
+            commit_url: updateResult.commit.html_url
+        };
+        
+    } catch (error) {
+        console.error('❌ 自动化脚本执行失败:', error);
+        
+        // 返回错误信息
+        return {
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        };
+    }
+}
+```
+
+=== 使用说明 ===
+
+1. **创建GitHub Personal Access Token**：
+   - 访问：https://github.com/settings/tokens
+   - 点击"Generate new token (classic)"
+   - 权限选择：repo (Full control of private repositories)
+   - 复制生成的token
+
+2. **在飞书中设置自动化**：
+   - 打开多维表格 → 自动化 → 创建自动化
+   - 触发器：新增/修改记录时
+   - 执行动作：代码执行
+   - 将上述脚本复制粘贴到代码区域
+   - 将 'YOUR_GITHUB_TOKEN_HERE' 替换为实际的token
+
+3. **字段名映射**：
+   确保飞书表格中的字段名与脚本中的一致：
+   - Outlet Code → shop_code
+   - latitude → 纬度
+   - longitude → 经度  
+   - Nama Pemilik → 店铺名称
+   - brand → 品牌
+   - kecamatan → 区域
+   - potensi → 潜力标记
+
+4. **测试自动化**：
+   - 保存并启用自动化
+   - 在表格中添加/修改一条记录
+   - 检查GitHub仓库是否自动更新
+
+注意：GitHub API有速率限制，建议不要过于频繁地触发更新。 

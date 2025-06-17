@@ -1,0 +1,36 @@
+=== 快速使用指南 ===
+
+## 常用操作
+
+### 本地开发
+双击：启动地图应用.sh
+
+### 启动服务器
+双击：启动飞书数据服务.sh
+
+### 部署到生产环境
+双击：推送到Render.sh
+
+### 提交代码
+双击：自动推送git.sh
+
+## 重要地址
+
+地图网站：https://locationmarker.netlify.app
+服务器管理：https://indonesia-map-feishu-integration.onrender.com/admin
+数据推送：https://indonesia-map-feishu-integration.onrender.com/webhook
+
+## 飞书配置要点
+
+1. 触发器：选择"当记录创建时"
+2. 变量：必须从下拉菜单选择，不能手动输入
+3. 字段名：必须与表格列名完全一致
+4. 推送地址：使用/webhook端点，无需验证
+
+## 故障排除
+
+1. 数据不同步 → 检查飞书自动化配置
+2. 地图不显示 → 检查Render服务器状态
+3. 坐标错误 → 确认经纬度格式正确
+
+详细说明请查看 README.txt 
