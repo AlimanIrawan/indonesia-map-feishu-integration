@@ -1,0 +1,112 @@
+=== Netlify + GitHub Actions 完整使用指南 ===
+
+🎯 当前架构：
+• 前端：托管在Netlify（自动部署）
+• 数据存储：GitHub仓库CSV文件
+• 数据同步：GitHub Actions + 飞书自动化
+• 成本：完全免费
+
+📋 部署状态确认：
+
+第一步：确认Netlify部署
+1. 访问您的Netlify应用：https://your-app-name.netlify.app
+2. 确认应用正常运行
+3. 检查Netlify是否已连接到GitHub仓库自动部署
+
+第二步：GitHub Actions配置
+1. 确认GitHub仓库：https://github.com/AlimanIrawan/indonesia-map-app
+2. 检查Actions工作流：https://github.com/AlimanIrawan/indonesia-map-app/actions
+3. 确认.github/workflows/update-feishu-data.yml文件存在
+
+第三步：飞书HTTP请求自动化配置
+⚠️ 重要：请查看"飞书HTTP请求自动化配置.txt"文件获取详细配置步骤
+
+简要流程：
+1. 创建GitHub Personal Access Token
+2. 在飞书多维表格中创建自动化
+3. 选择"发送HTTP请求"动作
+4. 配置GitHub API调用参数
+
+🔄 完整工作流程：
+
+1. **数据录入**：在飞书多维表格中添加/修改店铺数据
+2. **自动触发**：飞书自动化发送HTTP请求到GitHub API
+3. **GitHub Actions**：自动更新public/markers.csv文件
+4. **自动部署**：Netlify检测到GitHub仓库变化，自动重新部署
+5. **数据更新**：用户访问Netlify应用看到最新数据
+
+⚡ 测试整个流程：
+
+1. **测试GitHub Actions**：
+```bash
+export GITHUB_TOKEN=your_token_here
+./测试GitHub_Actions.sh
+```
+
+2. **验证数据更新**：
+   - 检查GitHub仓库的CSV文件是否更新
+   - 等待Netlify自动重新部署（通常1-2分钟）
+   - 访问Netlify应用确认数据已更新
+
+3. **测试飞书集成**：
+   - 在飞书表格中添加测试数据
+   - 查看飞书自动化执行日志
+   - 检查GitHub Actions是否被触发
+   - 确认Netlify应用数据更新
+
+🔗 重要链接：
+
+• Netlify应用：https://your-app-name.netlify.app
+• GitHub仓库：https://github.com/AlimanIrawan/indonesia-map-app
+• GitHub Actions：https://github.com/AlimanIrawan/indonesia-map-app/actions
+• 数据文件：https://github.com/AlimanIrawan/indonesia-map-app/blob/main/public/markers.csv
+• Netlify部署：https://app.netlify.com/sites/your-site-name/deploys
+
+📊 监控和维护：
+
+1. **GitHub Actions监控**：
+   - 定期检查Actions执行状态
+   - 查看失败的工作流并排查问题
+
+2. **Netlify部署监控**：
+   - 确认自动部署正常工作
+   - 检查部署日志是否有错误
+
+3. **数据质量检查**：
+   - 定期验证CSV数据完整性
+   - 确认地图显示正确
+
+🛠️ 故障排除：
+
+1. **飞书自动化失败**：
+   - 检查GitHub Token是否有效
+   - 验证HTTP请求配置是否正确
+   - 查看飞书自动化执行日志
+
+2. **GitHub Actions未触发**：
+   - 确认Token权限（repo + workflow）
+   - 检查仓库名称是否正确
+   - 查看Actions页面错误信息
+
+3. **Netlify未自动部署**：
+   - 检查Netlify是否连接到正确的GitHub仓库
+   - 确认自动部署设置已启用
+   - 查看Netlify部署日志
+
+4. **前端数据未更新**：
+   - 清除浏览器缓存
+   - 确认GitHub CSV文件已更新
+   - 等待Netlify重新部署完成
+
+💡 优化建议：
+
+1. **设置Netlify构建钩子**：可以在GitHub Actions完成后主动触发Netlify重新部署
+2. **添加数据备份**：定期备份重要的CSV数据
+3. **监控告警**：设置GitHub Actions失败时的邮件通知
+
+🎉 完成！
+
+现在您拥有一个完全自动化的系统：
+- 飞书HTTP请求 → GitHub Actions → Netlify自动部署
+- 完全免费，无需本地操作
+- 数据永久存储，高可用性 

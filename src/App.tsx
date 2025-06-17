@@ -309,12 +309,12 @@ function App() {
   
   // 加载可用区域名称
   useEffect(() => {
-    // 强制只从Render服务器读取区域数据
-    const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
+    // 从GitHub仓库读取区域数据
+    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
     
-    console.log('🔍 从Render服务器加载区域名称...');
+    console.log('🔍 从GitHub仓库加载区域名称...');
     
-    fetch(renderUrl, {
+    fetch(githubUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -322,9 +322,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Render服务器响应错误: ${response.status}`);
+          throw new Error(`GitHub仓库响应错误: ${response.status}`);
         }
-        console.log('✅ 成功从Render服务器获取区域数据');
+        console.log('✅ 成功从GitHub仓库获取区域数据');
         return response.text();
       })
       .then(csvText => {
@@ -381,7 +381,7 @@ function App() {
         console.log(`✅ 成功加载 ${kecamatans.size} 个区域名称`);
       })
       .catch(err => {
-        console.error('从Render服务器加载区域数据出错:', err);
+        console.error('从GitHub仓库加载区域数据出错:', err);
         // 如果失败，至少提供"One Meter"选项
         setAvailableKecamatans(["One Meter"]);
       });
@@ -433,12 +433,12 @@ function App() {
 
     const checkForUpdates = async () => {
       try {
-        // 强制只从Render服务器检查更新
-        const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
+        // 从GitHub仓库检查更新
+        const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
         
-        console.log('🔍 检查Render服务器数据更新...');
+        console.log('🔍 检查GitHub仓库数据更新...');
         
-        const response = await fetch(renderUrl, {
+        const response = await fetch(githubUrl, {
           method: 'HEAD',
           cache: 'no-cache',
           headers: {
@@ -453,12 +453,12 @@ function App() {
             
             // 如果文件时间比上次记录的时间新，则重新加载数据
             if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
-              console.log('🔄 检测到Render服务器数据更新，正在重新加载...');
+              console.log('🔄 检测到GitHub仓库数据更新，正在重新加载...');
               setDataUpdateCount(prev => prev + 1);
               
               // 显示更新提示
               const updateNotification = document.createElement('div');
-              updateNotification.textContent = '检测到新数据（Render服务器），正在更新地图...';
+              updateNotification.textContent = '检测到新数据（GitHub仓库），正在更新地图...';
               updateNotification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -487,10 +487,10 @@ function App() {
             setLastUpdateTime(fileTime);
           }
         } else {
-          console.log('⚠️ Render服务器检查失败:', response.status);
+          console.log('⚠️ GitHub仓库检查失败:', response.status);
         }
       } catch (error) {
-        console.log('检查Render服务器更新时出错:', error);
+        console.log('检查GitHub仓库更新时出错:', error);
         // 静默处理错误，不影响正常使用
       }
     };
