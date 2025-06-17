@@ -3,9 +3,11 @@
   command = "npm run build"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/api/markers.csv"
+  to = "https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv"
   status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}
 
 [[headers]]
   # 定义处理CSV文件的路径
@@ -13,4 +15,9 @@
   [headers.values]
     # 允许跨域访问CSV文件
     Access-Control-Allow-Origin = "*"
-    Content-Type = "text/csv" 
+    Content-Type = "text/csv"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 
