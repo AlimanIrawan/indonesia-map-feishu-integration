@@ -16,6 +16,46 @@ function log(message) {
     console.log(`[${timestamp}] ${message}`);
 }
 
+// GitHub API调用函数
+async function triggerGitHubActions(markerData) {
+    try {
+        log('开始调用GitHub API触发Actions');
+        
+        // 使用动态import来导入node-fetch
+        const fetch = (await import('node-fetch')).default;
+        
+        const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'token ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi',
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                event_type: 'feishu_update',
+                client_payload: {
+                    shop_code: markerData.shop_code,
+                    latitude: markerData.latitude.toString(),
+                    longitude: markerData.longitude.toString(),
+                    outlet_name: markerData.outlet_name
+                }
+            })
+        });
+        
+        if (response.ok) {
+            log('✅ GitHub Actions触发成功');
+            return { success: true };
+        } else {
+            const errorText = await response.text();
+            log(`❌ GitHub Actions触发失败: ${response.status} - ${errorText}`);
+            return { success: false, error: `GitHub API错误: ${response.status}` };
+        }
+    } catch (error) {
+        log(`❌ GitHub API调用出错: ${error.message}`);
+        return { success: false, error: error.message };
+    }
+}
+
 // 健康检查端点
 app.get('/', (req, res) => {
     log('健康检查请求');
@@ -102,12 +142,17 @@ app.post('/webhook', async (req, res) => {
             });
         }
         
+        // 触发GitHub Actions
+        log('触发GitHub Actions更新CSV文件');
+        const githubResult = await triggerGitHubActions(markerData);
+        
         // 返回成功响应
         const response = {
             success: true,
             message: '地点数据已成功添加',
             data: markerData,
-            totalMarkers: markers.length
+            totalMarkers: markers.length,
+            github: githubResult
         };
         
         log(`响应数据: ${JSON.stringify(response, null, 2)}`);
