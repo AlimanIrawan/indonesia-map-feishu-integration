@@ -21,13 +21,23 @@ async function triggerGitHubActions(markerData) {
     try {
         log('开始调用GitHub API触发Actions');
         
+        // 调试：检查环境变量
+        const token = process.env.GITHUB_TOKEN;
+        if (!token) {
+            log('❌ GITHUB_TOKEN环境变量未设置');
+            return { success: false, error: 'GITHUB_TOKEN环境变量未设置' };
+        }
+        
+        log(`🔑 Token前缀: ${token.substring(0, 10)}...`);
+        log(`🔑 Token长度: ${token.length}`);
+        
         // 使用动态import来导入node-fetch
         const fetch = (await import('node-fetch')).default;
         
         const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches', {
             method: 'POST',
             headers: {
-                'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                'Authorization': `token ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/vnd.github.v3+json',
                 'User-Agent': 'feishu-webhook-server'
