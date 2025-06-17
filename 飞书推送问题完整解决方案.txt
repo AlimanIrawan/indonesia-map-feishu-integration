@@ -1,0 +1,200 @@
+=== 飞书推送问题完整解决方案 ===
+
+🚨 当前问题分析：
+从截图看到：飞书自动化显示"运行失败"，提示"HTTP请求出参返回格式不正确"
+
+🔍 问题原因：
+1. GitHub API返回的响应格式与飞书期望的不匹配
+2. 可能仍然存在Token认证问题
+3. 飞书自动化的响应处理配置不正确
+
+⚡ 完整解决步骤：
+
+=== 第一步：重新创建GitHub Token ===
+1. 访问：https://github.com/settings/tokens
+2. 删除所有旧的Token
+3. 点击"Generate new token (classic)"
+4. 配置：
+   - Token名称：Feishu-Map-Integration-2025
+   - 过期时间：No expiration
+   - 权限勾选：
+     ✅ repo (完整仓库访问)
+     ✅ workflow (工作流访问)
+     ✅ admin:repo_hook (仓库钩子管理)
+5. 复制Token（格式：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）
+
+=== 第二步：修复飞书自动化配置 ===
+
+**请求方法**：POST
+
+**请求URL**：
+```
+https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches
+```
+
+**请求头（Headers）**：
+```
+Authorization: token ghp_你的新Token
+Content-Type: application/json
+Accept: application/vnd.github.v3+json
+User-Agent: Feishu-Automation/1.0
+```
+
+**请求体（Body）** - JSON格式：
+```json
+{
+  "event_type": "feishu-data-update",
+  "client_payload": {
+    "shop_code": "{{记录.shop_code}}",
+    "latitude": "{{记录.latitude}}",
+    "longitude": "{{记录.longitude}}",
+    "outlet_name": "{{记录.outlet_name}}",
+    "brand": "{{记录.brand}}",
+    "kecamatan": "{{记录.kecamatan}}",
+    "potensi": "{{记录.potensi}}"
+  }
+}
+```
+
+**响应处理配置**：
+在飞书自动化的"高级设置"中：
+- 成功状态码：204
+- 响应格式：不检查响应内容
+- 或者设置为：任何2xx状态码都视为成功
+
+=== 第三步：字段映射检查 ===
+
+确认你的飞书表格字段名称，并相应修改JSON中的映射：
+
+常见字段名对照：
+```
+飞书字段名 → JSON字段名
+门店编号/店铺代码 → shop_code
+纬度/lat → latitude
+经度/lng/lon → longitude
+店铺名称/nama_pemilik → outlet_name
+品牌/brand_name → brand
+区域/district/地区 → kecamatan
+潜力/potential/类型 → potensi
+```
+
+示例：如果你的字段是中文名称
+```json
+{
+  "event_type": "feishu-data-update",
+  "client_payload": {
+    "shop_code": "{{记录.门店编号}}",
+    "latitude": "{{记录.纬度}}",
+    "longitude": "{{记录.经度}}",
+    "outlet_name": "{{记录.店铺名称}}",
+    "brand": "{{记录.品牌}}",
+    "kecamatan": "{{记录.区域}}",
+    "potensi": "{{记录.潜力等级}}"
+  }
+}
+```
+
+=== 第四步：测试Token有效性 ===
+
+在配置之前，先测试Token是否有效：
+
+1. 打开终端/命令行
+2. 运行以下命令（替换你的Token）：
+```bash
+curl -H "Authorization: token ghp_你的Token" \
+     -H "Accept: application/vnd.github.v3+json" \
+     https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration
+```
+
+如果返回仓库信息（JSON格式），说明Token有效。
+如果返回401错误，说明Token无效，需要重新创建。
+
+=== 第五步：测试API调用 ===
+
+测试完整的API调用：
+```bash
+curl -X POST \
+  -H "Authorization: token ghp_你的Token" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/vnd.github.v3+json" \
+  -d '{
+    "event_type": "feishu-data-update",
+    "client_payload": {
+      "shop_code": "TEST001",
+      "latitude": "-6.2",
+      "longitude": "106.816666",
+      "outlet_name": "测试门店",
+      "brand": "测试品牌",
+      "kecamatan": "测试区域",
+      "potensi": "高潜力"
+    }
+  }' \
+  https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches
+```
+
+成功的响应应该是：
+- 状态码：204 No Content
+- 无响应体内容
+
+=== 第六步：飞书自动化详细配置 ===
+
+1. **触发器**：当记录被创建时 或 当记录被修改时
+2. **动作**：发送HTTP请求
+3. **高级设置**：
+   - 超时时间：30秒
+   - 重试次数：3次
+   - 成功状态码：204 或 2xx
+   - 失败处理：记录日志
+
+=== 第七步：完整测试流程 ===
+
+1. 保存飞书自动化配置
+2. 在飞书表格中添加测试记录：
+   ```
+   shop_code: TEST001
+   latitude: -6.2
+   longitude: 106.816666
+   outlet_name: 测试门店
+   brand: 测试品牌
+   kecamatan: 测试区域
+   potensi: 高潜力
+   ```
+3. 观察自动化执行结果
+4. 检查GitHub Actions：
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/actions
+5. 确认CSV文件更新：
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/blob/main/public/markers.csv
+
+✅ 成功标志：
+- 飞书自动化显示"运行成功"
+- GitHub Actions有新的工作流运行
+- CSV文件有新增数据
+- 地图应用显示新标记点
+
+❌ 常见错误及解决：
+
+1. **401 Bad credentials**：
+   - 重新创建Token
+   - 确保Token有正确权限
+
+2. **404 Not Found**：
+   - 检查仓库名称：indonesia-map-feishu-integration
+   - 确保Token有仓库访问权限
+
+3. **HTTP请求出参返回格式不正确**：
+   - 设置成功状态码为204
+   - 不检查响应内容格式
+   - 或接受任何2xx状态码
+
+4. **字段映射错误**：
+   - 确认飞书字段名称
+   - 检查JSON语法正确性
+
+🔧 调试技巧：
+
+1. **查看详细日志**：点击飞书自动化的"详情"查看具体错误
+2. **分步测试**：先用curl命令测试API
+3. **简化测试**：先用最少字段测试
+4. **检查权限**：确保GitHub Token权限充足
+
+完成以上步骤后，你的飞书数据推送应该能正常工作！ 
