@@ -27,9 +27,10 @@ async function triggerGitHubActions(markerData) {
         const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches', {
             method: 'POST',
             headers: {
-                'Authorization': 'token ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi',
+                'Authorization': 'token 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',
                 'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json'
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'feishu-webhook-server'
             },
             body: JSON.stringify({
                 event_type: 'feishu_update',
