@@ -268,7 +268,7 @@ function App() {
   // 加载可用区域名称
   useEffect(() => {
     // 从GitHub仓库读取区域数据
-    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
+    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
     
     console.log('🌐 从GitHub仓库加载区域名称...');
     
@@ -435,7 +435,7 @@ function App() {
     setIsLoading(true);
     
     // 直接从GitHub仓库读取CSV数据
-    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
+    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
     
     console.log('🌐 从GitHub仓库获取数据...');
     
@@ -938,7 +938,7 @@ function App() {
     const checkForUpdates = async () => {
       try {
         // 从GitHub仓库检查更新
-        const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
+        const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
         
         console.log('🔍 检查GitHub仓库数据更新...');
         
