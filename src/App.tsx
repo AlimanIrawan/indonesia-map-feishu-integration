@@ -267,12 +267,12 @@ function App() {
   
   // 加载可用区域名称
   useEffect(() => {
-    // 通过Netlify代理访问数据
-    const proxyUrl = '/api/markers.csv';
+    // 临时直接访问GitHub（调试用）
+    const directUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
     
-    console.log('🌐 通过Netlify代理加载区域名称...');
+    console.log('🌐 直接从GitHub加载区域名称（调试模式）...');
     
-    fetch(proxyUrl, {
+    fetch(directUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -280,9 +280,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Netlify代理响应错误: ${response.status}`);
+          throw new Error(`直接访问GitHub响应错误: ${response.status}`);
         }
-        console.log('✅ 成功从Netlify代理获取区域数据');
+        console.log('✅ 成功从GitHub获取区域数据');
         return response.text();
       })
       .then(csvText => {
@@ -339,7 +339,7 @@ function App() {
         console.log(`✅ 成功加载 ${kecamatans.size} 个区域名称`);
       })
       .catch(err => {
-        console.error('从Netlify代理加载区域数据出错:', err);
+        console.error('从GitHub加载区域数据出错:', err);
         // 如果失败，至少提供"One Meter"选项
         setAvailableKecamatans(["One Meter"]);
       });
@@ -434,13 +434,13 @@ function App() {
   const loadMarkerData = useCallback((kecamatanValue: string) => {
     setIsLoading(true);
     
-    // 通过Netlify代理访问数据
-    const proxyUrl = '/api/markers.csv';
+    // 临时直接访问GitHub（调试用）
+    const directUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
     
-    console.log('🌐 通过Netlify代理获取数据...');
+    console.log('🌐 直接从GitHub获取数据（调试模式）...');
     
-    // 从Netlify获取数据
-    fetch(proxyUrl, {
+    // 从GitHub获取数据
+    fetch(directUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -448,9 +448,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Netlify数据访问失败: ${response.status}`);
+          throw new Error(`直接访问GitHub数据访问失败: ${response.status}`);
         }
-        console.log('✅ 成功从Netlify获取数据');
+        console.log('✅ 成功从GitHub获取数据');
         
         // 记录文件的最后修改时间
         const lastModified = response.headers.get('Last-Modified');
@@ -463,7 +463,7 @@ function App() {
         return response.text();
       })
       .then(csvText => {
-        console.log('📊 Netlify CSV数据:', csvText.substring(0, 200) + '...');
+        console.log('📊 GitHub CSV数据:', csvText.substring(0, 200) + '...');
         
         const lines = csvText.split('\n');
         const multiBrandLocations: string[][] = [];
@@ -571,8 +571,8 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('从Netlify加载数据出错:', err);
-        setError(`无法从Netlify加载数据: ${err.message}`);
+        console.error('从GitHub加载数据出错:', err);
+        setError(`无法从GitHub加载数据: ${err.message}`);
         setIsLoading(false);
         
         // 显示错误提示
@@ -937,12 +937,12 @@ function App() {
 
     const checkForUpdates = async () => {
       try {
-        // 通过Netlify代理检查更新
-        const proxyUrl = '/api/markers.csv';
+        // 临时直接访问GitHub（调试用）
+        const directUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv';
         
-        console.log('🔍 通过Netlify代理检查数据更新...');
+        console.log('🔍 直接从GitHub检查数据更新（调试模式）...');
         
-        const response = await fetch(proxyUrl, {
+        const response = await fetch(directUrl, {
           method: 'HEAD',
           cache: 'no-cache',
           headers: {
@@ -957,12 +957,12 @@ function App() {
             
             // 如果文件时间比上次记录的时间新，则重新加载数据
             if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
-              console.log('🔄 检测到Netlify仓库数据更新，正在重新加载...');
+              console.log('🔄 检测到GitHub仓库数据更新，正在重新加载...');
               setDataUpdateCount(prev => prev + 1);
               
               // 显示更新提示
               const updateNotification = document.createElement('div');
-              updateNotification.textContent = '检测到新数据（Netlify仓库），正在更新地图...';
+              updateNotification.textContent = '检测到新数据（GitHub仓库），正在更新地图...';
               updateNotification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -993,7 +993,7 @@ function App() {
           }
         }
       } catch (error) {
-        console.error('检查Netlify仓库更新失败:', error);
+        console.error('检查GitHub仓库更新失败:', error);
       }
     };
 
