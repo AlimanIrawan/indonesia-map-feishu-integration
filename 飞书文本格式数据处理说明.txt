@@ -1,0 +1,101 @@
+=== 飞书文本格式数据处理说明 ===
+
+🎯 问题解决：
+你提到的latitude和longitude是文本格式但内容是数字，这确实是导致推送问题的关键原因！
+
+🔍 问题分析：
+1. 飞书多维表格中的数字字段如果设置为"文本"类型
+2. 即使内容是数字，也会作为字符串传递给GitHub API
+3. GitHub Actions工作流需要正确处理这种文本格式的数字数据
+
+✅ 已修复的问题：
+我已经更新了GitHub Actions工作流文件，现在可以：
+
+1. **自动清理文本格式的数字**：
+   - 移除空格和非数字字符
+   - 保留小数点和负号
+   - 验证数据格式是否正确
+
+2. **数据验证**：
+   - 检查纬度经度是否为有效数字
+   - 验证坐标是否在印尼地理范围内
+   - 纬度范围：-11 到 6 度
+   - 经度范围：95 到 141 度
+
+3. **CSV格式处理**：
+   - 处理文本中的逗号（替换为中文逗号）
+   - 移除引号等特殊字符
+   - 确保CSV格式正确
+
+📋 飞书字段类型建议：
+
+**推荐设置**：
+- shop_code：文本类型 ✅
+- latitude：数字类型（推荐）或文本类型 ✅
+- longitude：数字类型（推荐）或文本类型 ✅
+- outlet_name：文本类型 ✅
+- brand：文本类型 ✅
+- kecamatan：文本类型 ✅
+- potensi：文本类型 ✅
+
+**注意事项**：
+- 即使字段是文本类型，只要内容是有效数字，系统现在都能正确处理
+- 纬度经度可以是小数，如：-6.2, 106.816666
+- 不要包含度数符号(°)或其他文字
+
+🧪 测试数据示例：
+
+在飞书表格中添加以下测试数据：
+```
+shop_code: TEST001
+latitude: -6.2
+longitude: 106.816666
+outlet_name: 测试门店
+brand: 测试品牌
+kecamatan: 雅加达
+potensi: 高潜力
+```
+
+或者即使是文本格式：
+```
+shop_code: TEST002
+latitude: "-6.175"
+longitude: "106.827"
+outlet_name: 另一个测试门店
+brand: 另一个品牌
+kecamatan: 万隆
+potensi: 中等潜力
+```
+
+🔄 完整测试流程：
+
+1. **在飞书表格中添加测试数据**
+2. **观察自动化执行结果**
+3. **检查GitHub Actions日志**：
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/actions
+4. **确认CSV文件更新**：
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/blob/main/public/markers.csv
+5. **查看地图应用**：
+   https://indonesia-map-feishu-integration.netlify.app
+
+✅ 成功标志：
+- 飞书自动化显示"运行成功"
+- GitHub Actions日志显示数据格式转换成功
+- CSV文件有新增记录，纬度经度为纯数字格式
+- 地图应用显示新的标记点
+
+📊 GitHub Actions日志示例：
+```
+纬度: "-6.2" -> -6.2
+经度: "106.816666" -> 106.816666
+✅ 数据验证通过
+📊 添加的记录: TEST001,-6.2,106.816666,测试门店,测试品牌,雅加达,高潜力
+```
+
+🔧 如果仍有问题：
+
+1. **检查字段映射**：确保飞书字段名与JSON配置匹配
+2. **查看详细日志**：在GitHub Actions中查看具体错误信息
+3. **验证数据格式**：确保纬度经度是有效数字
+
+现在系统已经能够正确处理文本格式的纬度经度数据了！ 
