@@ -2,8 +2,8 @@ name: Keep Service Alive
 
 on:
   schedule:
-    # 每10分钟ping一次服务 (避免休眠)
-    - cron: '*/10 * * * *'
+    # 每5分钟ping一次服务 (避免休眠) - 更频繁的测试
+    - cron: '*/5 * * * *'
   workflow_dispatch: # 允许手动触发
 
 jobs:
@@ -13,12 +13,25 @@ jobs:
     steps:
     - name: Ping服务保持活跃
       run: |
+        # 显示当前时间
+        echo "🕒 当前时间: $(date)"
+        echo "🔄 开始执行Keep-alive任务"
+        
         # 使用正确的Render服务地址
         SERVICE_URL="https://indonesia-map-feishu-integration.onrender.com"
         
-        echo "正在ping服务: $SERVICE_URL"
+        echo "🌐 正在ping服务: $SERVICE_URL"
         
-        response=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL")
+        # 详细的curl输出
+        response=$(curl -s -w "%{http_code}" -o response_body.txt "$SERVICE_URL")
+        
+        echo "📊 HTTP状态码: $response"
+        
+        if [ -f response_body.txt ]; then
+          echo "📄 响应内容:"
+          cat response_body.txt
+          rm response_body.txt
+        fi
         
         if [ $response -eq 200 ]; then
           echo "✅ 服务运行正常 (HTTP $response)"
@@ -28,4 +41,4 @@ jobs:
           echo "继续执行，可能服务正在启动中"
         fi
         
-        echo "Keep-alive任务完成" 
+        echo "✅ Keep-alive任务完成" 
