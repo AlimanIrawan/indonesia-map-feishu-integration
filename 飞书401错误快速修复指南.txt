@@ -1,0 +1,106 @@
+=== 飞书401错误快速修复指南 ===
+
+🚨 问题描述：
+飞书显示推送成功，但GitHub上的markers.csv没有变化
+HTTP响应显示：401 "Bad credentials"
+
+🔍 问题原因：
+1. GitHub Personal Access Token错误或过期
+2. 请求URL中的仓库名称错误
+3. Token权限不足
+
+⚡ 立即修复步骤：
+
+第一步：重新创建GitHub Token
+1. 访问：https://github.com/settings/tokens
+2. 找到并删除旧的Token（如果存在）
+3. 点击"Generate new token (classic)"
+4. 配置如下：
+   - Token名称：Feishu-Integration-Token-2025
+   - 过期时间：No expiration（不过期）
+   - 权限勾选：
+     ✅ repo（完整仓库访问）
+     ✅ workflow（工作流访问）
+5. 点击"Generate token"
+6. 立即复制Token（格式：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）
+   ⚠️ 注意：Token只显示一次，请立即保存！
+
+第二步：修复飞书自动化配置
+1. 打开飞书多维表格
+2. 进入"自动化"设置
+3. 找到现有的HTTP请求自动化
+4. 修改以下配置：
+
+**请求URL**（修复仓库名）：
+```
+https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches
+```
+
+**请求头**（更新Token）：
+```
+Authorization: token ghp_你的新Token
+Content-Type: application/json
+Accept: application/vnd.github.v3+json
+User-Agent: Feishu-Automation
+```
+
+**请求体**（保持不变）：
+```json
+{
+  "event_type": "feishu-data-update",
+  "client_payload": {
+    "shop_code": "{{记录.shop_code}}",
+    "latitude": "{{记录.latitude}}",
+    "longitude": "{{记录.longitude}}",
+    "outlet_name": "{{记录.outlet_name}}",
+    "brand": "{{记录.brand}}",
+    "kecamatan": "{{记录.kecamatan}}",
+    "potensi": "{{记录.potensi}}"
+  }
+}
+```
+
+第三步：立即测试
+1. 保存自动化配置
+2. 在飞书表格中添加一条测试记录
+3. 观察自动化执行结果
+4. 检查GitHub Actions：
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/actions
+
+✅ 成功标志：
+- 飞书自动化显示"执行成功"
+- GitHub Actions有新的工作流运行
+- public/markers.csv文件有新增数据
+- 网站地图显示新的标记点
+
+❌ 如果仍然失败：
+检查以下几点：
+1. Token是否完整复制（包括ghp_前缀）
+2. 仓库名是否正确：indonesia-map-feishu-integration
+3. Token是否有repo权限
+4. 飞书字段映射是否正确
+
+🔧 常见Token问题：
+- Token格式：ghp_开头，40个字符
+- 权限：必须包含repo和workflow
+- 状态：未过期，未被删除
+- 复制：完整复制，无多余空格
+
+📝 验证Token有效性：
+可以用以下命令测试Token（在终端中）：
+```bash
+curl -H "Authorization: token ghp_你的Token" \
+     https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration
+```
+
+如果返回仓库信息，说明Token有效。
+
+🎯 修复完成后的完整流程：
+1. 飞书表格添加数据
+2. 自动化触发HTTP请求
+3. GitHub Actions执行工作流
+4. 更新markers.csv文件
+5. Netlify自动重新部署
+6. 地图应用显示新数据
+
+完成以上步骤后，你的飞书数据将正常同步到地图应用！ 

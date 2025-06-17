@@ -13,6 +13,7 @@
    ✅ repo (完整仓库访问权限)
    ✅ workflow (工作流访问权限)
 5. 复制生成的token（格式：ghp_xxxxxxxxxxxxxxxxxxxx）
+   ⚠️ 重要：Token只显示一次，请立即复制保存！
 
 第二步：在飞书多维表格中配置自动化
 1. 打开您的飞书多维表格
@@ -26,7 +27,7 @@
 **请求方法**：POST
 
 **请求URL**：
-https://api.github.com/repos/AlimanIrawan/indonesia-map-app/dispatches
+https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches
 
 **请求头（Headers）**：
 ```
@@ -70,11 +71,13 @@ User-Agent: Feishu-Automation
 
 1. **Token替换**：将请求头中的 `ghp_your_real_token_here` 替换为第一步获取的真实GitHub Token
 
-2. **字段名称**：确保JSON中的字段名与您表格中的实际字段名一致
+2. **仓库名称**：确认使用正确的仓库名称 `indonesia-map-feishu-integration`
 
-3. **必填字段**：shop_code、latitude、longitude 是必填的，其他字段可选
+3. **字段名称**：确保JSON中的字段名与您表格中的实际字段名一致
 
-4. **数据格式**：确保纬度经度是数字格式，不要包含文字
+4. **必填字段**：shop_code、latitude、longitude 是必填的，其他字段可选
+
+5. **数据格式**：确保纬度经度是数字格式，不要包含文字
 
 📝 示例配置：
 
@@ -109,7 +112,7 @@ User-Agent: Feishu-Automation
 2. **在表格中添加一条测试记录**
 3. **检查自动化执行日志**
 4. **访问GitHub Actions查看是否触发**：
-   https://github.com/AlimanIrawan/indonesia-map-app/actions
+   https://github.com/AlimanIrawan/indonesia-map-feishu-integration/actions
 5. **确认CSV文件是否更新**
 
 ✅ 成功标志：
@@ -120,9 +123,10 @@ User-Agent: Feishu-Automation
 
 ❌ 常见错误：
 
-1. **401 Unauthorized**：
-   - GitHub Token错误或权限不足
-   - 检查Token是否正确复制
+1. **401 Unauthorized（Bad credentials）**：
+   - GitHub Token错误、过期或权限不足
+   - 重新生成Token并确保复制完整
+   - 确保Token有repo权限
 
 2. **400 Bad Request**：
    - JSON格式错误
@@ -130,8 +134,22 @@ User-Agent: Feishu-Automation
    - 数据类型不正确
 
 3. **404 Not Found**：
-   - 仓库路径错误
+   - 仓库路径错误（检查是否为indonesia-map-feishu-integration）
    - Token没有仓库访问权限
+
+4. **飞书显示成功但GitHub无变化**：
+   - 通常是401认证失败导致
+   - 检查Token是否正确配置
+
+🔧 立即修复步骤：
+
+如果遇到401错误：
+1. 重新访问：https://github.com/settings/tokens
+2. 删除旧的Token
+3. 创建新的Token，确保选择repo权限
+4. 复制完整的Token（包括ghp_前缀）
+5. 在飞书自动化中更新Authorization头部
+6. 确认请求URL使用正确仓库名：indonesia-map-feishu-integration
 
 🔄 完整流程验证：
 
