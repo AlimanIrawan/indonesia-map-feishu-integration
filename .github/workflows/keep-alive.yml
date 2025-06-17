@@ -13,8 +13,8 @@ jobs:
     steps:
     - name: Ping服务保持活跃
       run: |
-        # 替换为您的实际Render服务地址
-        SERVICE_URL="https://indonesia-map-feishu-service.onrender.com"
+        # 使用正确的Render服务地址
+        SERVICE_URL="https://indonesia-map-feishu-integration.onrender.com"
         
         echo "正在ping服务: $SERVICE_URL/health"
         
