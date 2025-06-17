@@ -68,7 +68,7 @@ jobs:
       run: |
         # 确保CSV文件存在
         if [ ! -f "public/markers.csv" ]; then
-          echo "shop_code,latitude,longitude,outlet_name" > public/markers.csv
+          echo "shop_code,latitude,longitude,outlet_name,brand,kecamatan,potensi" > public/markers.csv
           echo "📝 创建新的CSV文件"
         fi
         
@@ -88,11 +88,16 @@ jobs:
           echo "➕ 添加新记录: $SHOP_CODE"
         fi
         
-        # 添加新记录
-        echo "$SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN" >> public/markers.csv
+        # 确保文件以换行符结尾
+        if [ -s public/markers.csv ] && [ "$(tail -c1 public/markers.csv | wc -l)" -eq 0 ]; then
+          echo "" >> public/markers.csv
+        fi
+        
+        # 添加新记录（7个字段：前4个有数据，后3个为空）
+        echo "$SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN,,," >> public/markers.csv
         
         echo "✅ CSV文件更新完成"
-        echo "📊 添加的记录: $SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN"
+        echo "📊 添加的记录: $SHOP_CODE,$LATITUDE,$LONGITUDE,$OUTLET_NAME_CLEAN,,,"
         
         # 显示更新后的文件行数
         LINE_COUNT=$(wc -l < public/markers.csv)
