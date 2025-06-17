@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, LayersControl, ZoomControl, useMap, GeoJSON, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
@@ -51,7 +51,7 @@ const getMarkerColor = (brand: string): string => {
 
 // 添加定位组件
 const LocationMarker: React.FC = () => {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const map = useMap();
@@ -78,7 +78,7 @@ const LocationMarker: React.FC = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setPosition([latitude, longitude]);
+        setUserPosition([latitude, longitude]);
         map.flyTo([latitude, longitude], map.getZoom());
         setIsLocating(false);
       },
@@ -106,11 +106,11 @@ const LocationMarker: React.FC = () => {
   useEffect(() => {
     // 清理函数
     return () => {
-      if (position) {
-        setPosition(null);
+      if (userPosition) {
+        setUserPosition(null);
       }
     };
-  }, []);
+  }, [userPosition]);
 
   return (
     <>
@@ -124,9 +124,9 @@ const LocationMarker: React.FC = () => {
       </button>
       {locationError && <div className="location-error">{locationError}</div>}
 
-      {position && (
+      {userPosition && (
         <CircleMarker
-          center={position}
+          center={userPosition}
           radius={10}
           pathOptions={{
             fillColor: '#3388ff',
@@ -139,8 +139,8 @@ const LocationMarker: React.FC = () => {
           <Popup>
             <div>
               <h3>您的当前位置</h3>
-              <p>纬度: {position[0].toFixed(6)}</p>
-              <p>经度: {position[1].toFixed(6)}</p>
+              <p>纬度: {userPosition[0].toFixed(6)}</p>
+              <p>经度: {userPosition[1].toFixed(6)}</p>
             </div>
           </Popup>
         </CircleMarker>
@@ -312,7 +312,7 @@ function App() {
     // 从GitHub仓库读取区域数据
     const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
     
-    console.log('🔍 从GitHub仓库加载区域名称...');
+    console.log('🌐 从GitHub仓库加载区域名称...');
     
     fetch(githubUrl, {
       cache: 'no-cache',
@@ -427,85 +427,8 @@ function App() {
     }
   };
 
-  // 添加定期检查数据更新的useEffect
-  useEffect(() => {
-    if (!isAuthenticated || !isAutoRefreshEnabled) return;
-
-    const checkForUpdates = async () => {
-      try {
-        // 从GitHub仓库检查更新
-        const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
-        
-        console.log('🔍 检查GitHub仓库数据更新...');
-        
-        const response = await fetch(githubUrl, {
-          method: 'HEAD',
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (response.ok) {
-          const lastModified = response.headers.get('Last-Modified');
-          if (lastModified) {
-            const fileTime = new Date(lastModified).getTime();
-            
-            // 如果文件时间比上次记录的时间新，则重新加载数据
-            if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
-              console.log('🔄 检测到GitHub仓库数据更新，正在重新加载...');
-              setDataUpdateCount(prev => prev + 1);
-              
-              // 显示更新提示
-              const updateNotification = document.createElement('div');
-              updateNotification.textContent = '检测到新数据（GitHub仓库），正在更新地图...';
-              updateNotification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #4CAF50;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                z-index: 10000;
-                font-size: 14px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-              `;
-              document.body.appendChild(updateNotification);
-              
-              // 重新加载数据
-              loadMarkerData(kecamatanFilter);
-              
-              // 3秒后移除提示
-              setTimeout(() => {
-                if (document.body.contains(updateNotification)) {
-                  document.body.removeChild(updateNotification);
-                }
-              }, 3000);
-            }
-            
-            setLastUpdateTime(fileTime);
-          }
-        } else {
-          console.log('⚠️ GitHub仓库检查失败:', response.status);
-        }
-      } catch (error) {
-        console.log('检查GitHub仓库更新时出错:', error);
-        // 静默处理错误，不影响正常使用
-      }
-    };
-
-    // 立即检查一次
-    checkForUpdates();
-
-    // 每30秒检查一次数据更新
-    const interval = setInterval(checkForUpdates, 30000);
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, kecamatanFilter, lastUpdateTime, isAutoRefreshEnabled]);
-
-  // 加载标记点数据的函数
-  const loadMarkerData = (kecamatanValue: string) => {
+  // 加载标记点数据的函数 - 使用useCallback避免useEffect依赖警告
+  const loadMarkerData = useCallback((kecamatanValue: string) => {
     setIsLoading(true);
     
     // 直接从GitHub仓库读取CSV数据
@@ -540,7 +463,6 @@ function App() {
         console.log('📊 GitHub CSV数据:', csvText.substring(0, 200) + '...');
         
         const lines = csvText.split('\n');
-        const brandStats: { [key: string]: number } = {};
         const multiBrandLocations: string[][] = [];
         
         // 解析标记点数据
@@ -674,7 +596,7 @@ function App() {
           }
         }, 5000);
       });
-  };
+  }, []);
   
   // 更新统计数据
   const updateStatistics = (filteredMarkers: MarkerData[]) => {
@@ -1055,6 +977,78 @@ function App() {
       </div>
     );
   };
+
+  // 添加缺失的useEffect用于数据更新检查
+  useEffect(() => {
+    if (!isAuthenticated || !isAutoRefreshEnabled) return;
+
+    const checkForUpdates = async () => {
+      try {
+        // 从GitHub仓库检查更新
+        const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
+        
+        console.log('🔍 检查GitHub仓库数据更新...');
+        
+        const response = await fetch(githubUrl, {
+          method: 'HEAD',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const lastModified = response.headers.get('Last-Modified');
+          if (lastModified) {
+            const fileTime = new Date(lastModified).getTime();
+            
+            // 如果文件时间比上次记录的时间新，则重新加载数据
+            if (lastUpdateTime > 0 && fileTime > lastUpdateTime) {
+              console.log('🔄 检测到GitHub仓库数据更新，正在重新加载...');
+              setDataUpdateCount(prev => prev + 1);
+              
+              // 显示更新提示
+              const updateNotification = document.createElement('div');
+              updateNotification.textContent = '检测到新数据（GitHub仓库），正在更新地图...';
+              updateNotification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              `;
+              document.body.appendChild(updateNotification);
+              
+              // 重新加载数据
+              loadMarkerData(kecamatanFilter);
+              
+              // 3秒后移除提示
+              setTimeout(() => {
+                if (document.body.contains(updateNotification)) {
+                  document.body.removeChild(updateNotification);
+                }
+              }, 3000);
+            }
+            
+            // 更新最后检查时间
+            setLastUpdateTime(fileTime);
+          }
+        }
+      } catch (error) {
+        console.error('检查GitHub仓库更新失败:', error);
+      }
+    };
+
+    // 每30秒检查一次数据更新
+    const interval = setInterval(checkForUpdates, 30000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, kecamatanFilter, lastUpdateTime, isAutoRefreshEnabled, loadMarkerData]);
 
   // 显示错误信息
   if (error) {
