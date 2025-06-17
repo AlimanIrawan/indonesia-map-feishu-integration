@@ -1,6 +1,6 @@
 [build]
   publish = "build"
-  command = "npm install --legacy-peer-deps react react-dom react-scripts typescript @types/react @types/react-dom @types/node react-leaflet leaflet @types/leaflet && npx react-scripts build"
+  command = "npm install --legacy-peer-deps react react-dom react-scripts typescript @types/react @types/react-dom @types/node react-leaflet leaflet @types/leaflet web-vitals @testing-library/jest-dom @testing-library/react @testing-library/user-event @types/jest && npx react-scripts build"
   base = "./"
 
 [build.environment]
