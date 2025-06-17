@@ -1,45 +1,20 @@
-=== Render环境变量设置说明 ===
+## Render环境变量设置
 
-🔐 **重要：需要在Render控制台手动设置GitHub Token**
+### 设置步骤：
+1. 登录 Render.com
+2. 进入你的服务（feishu-webhook-server）
+3. 点击 "Environment" 标签页
+4. 添加环境变量：
 
-⚠️ **为什么需要手动设置**：
-- GitHub检测到代码中包含Token会阻止推送
-- 环境变量是存储敏感信息的安全方式
-- 避免Token泄露到公开的代码仓库
-
-🚀 **设置步骤**：
-
-**第一步：登录Render控制台**
-1. 访问：https://dashboard.render.com
-2. 找到服务：feishu-github-proxy
-
-**第二步：添加环境变量**
-1. 进入服务页面
-2. 点击"Environment"选项卡
-3. 点击"Add Environment Variable"
-
-**第三步：设置GitHub Token**
+### 环境变量配置：
 ```
 Key: GITHUB_TOKEN
-Value: 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
+Value: [你的GitHub Token]
 ```
 
-**第四步：保存并重新部署**
-1. 点击"Save Changes"
-2. 服务会自动重新部署
-
-✅ **验证设置**：
-部署完成后，访问健康检查URL确认服务正常运行。
-
-🔍 **如果遇到问题**：
-- 检查环境变量是否正确设置
-- 查看部署日志确认没有错误
-- 确认GitHub Token仍然有效
-
-📝 **注意事项**：
+### 注意事项：
 - Token必须有repo和workflow权限
 - 设置后需要重新部署服务
 - 不要在代码中硬编码Token
 - Token不会在代码中显示，保证安全
-- 只有在Render控制台才能看到和修改
-- 如果Token过期，只需要在控制台更新即可 
+- 只有在Render控制台才能看到和修改 
