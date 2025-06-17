@@ -1,0 +1,32 @@
+Render部署问题解决方案
+
+问题描述：
+Render服务报错"Root directory 'feishu-webhook-server' does not exist"
+
+问题原因：
+1. 之前删除了feishu-webhook-server目录
+2. 但Render的部署配置仍然指向这个目录
+3. 导致服务启动失败
+
+解决方案：
+
+方案一：删除Render服务（推荐）
+1. 登录 https://render.com
+2. 找到 indonesia-map-feishu-integration 服务
+3. 点击服务名称进入详情页
+4. 点击右上角的 Settings
+5. 滚动到页面底部，找到 "Delete Service" 按钮
+6. 点击删除服务
+
+方案二：修改Render配置
+1. 登录 https://render.com
+2. 找到服务并进入Settings
+3. 修改 Root Directory 为空或者 "."
+4. 重新部署
+
+推荐使用方案一，因为：
+- 我们已经不需要webhook服务器了
+- 飞书可以直接调用GitHub API
+- 删除服务可以避免不必要的资源占用
+
+删除服务后，你的飞书自动化仍然可以正常工作，因为它直接调用GitHub API，不依赖Render服务。 
