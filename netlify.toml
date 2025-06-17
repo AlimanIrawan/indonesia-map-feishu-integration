@@ -1,6 +1,10 @@
 [build]
   publish = "build"
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps react react-dom react-scripts typescript @types/react @types/react-dom @types/node react-leaflet leaflet @types/leaflet && npx react-scripts build"
+  base = "./"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/api/*"
