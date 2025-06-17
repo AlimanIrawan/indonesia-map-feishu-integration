@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, LayersControl, ZoomControl, useMap, GeoJSON, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, GeoJSON, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import logoBase64 from './logo.js'; // 导入Base64编码的Logo图片
@@ -149,50 +149,9 @@ const LocationMarker: React.FC = () => {
   );
 };
 
-// 添加SVG圆点组件
-const SplitCircleMarker: React.FC<{
-  brands: string[];
-  getColor: (brand: string) => string;
-}> = ({ brands, getColor }) => {
-  if (brands.length === 1) {
-    return (
-      <circle
-        cx="5"
-        cy="5"
-        r="4"
-        fill={getColor(brands[0])}
-        stroke="#000"
-        strokeWidth="1"
-      />
-    );
-  }
-
-  return (
-    <>
-      <path
-        d="M 5,5 L 9,5 A 4,4 0 0,0 5,1 Z"
-        fill={getColor(brands[0])}
-        stroke="#000"
-        strokeWidth="1"
-      />
-      <path
-        d="M 5,5 L 9,5 A 4,4 0 0,1 5,9 Z"
-        fill={getColor(brands.length > 1 ? brands[1] : brands[0])}
-        stroke="#000"
-        strokeWidth="1"
-      />
-    </>
-  );
-};
-
 // 明确列出常规品牌和特殊品牌
 const REGULAR_BRANDS = ['halocoko', 'Aice', 'Campina', 'Walls', 'Joyday', 'glico', 'Diamond', 'Other'];
 const SPECIAL_BRANDS = ['Potential', '[Kosong]', '[Tidak Bisa]', 'Multi-brand'];
-
-// 判断品牌是否为特殊类型
-const isSpecialBrand = (brand: string): boolean => {
-  return SPECIAL_BRANDS.includes(brand);
-};
 
 // 添加一个工具函数来处理大数字
 const formatLargeNumber = (num: string): string => {
@@ -280,7 +239,6 @@ function App() {
   const [selectedColors, setSelectedColors] = useState<ColorSelection>({});
   const [originalMarkers, setOriginalMarkers] = useState<MarkerData[]>([]);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
-  const [position, setPosition] = useState<[number, number] | null>(null);
   const [kecamatanFilter, setKecamatanFilter] = useState('');
   const [availableKecamatans, setAvailableKecamatans] = useState<string[]>([]);
   const [regionData, setRegionData] = useState<RegionGeoJSON[]>([]);
@@ -426,6 +384,51 @@ function App() {
       setPasswordError('密码错误，请重试');
     }
   };
+
+  // 更新统计数据
+  const updateStatistics = useCallback((filteredMarkers: MarkerData[]) => {
+    const brandStats: { [key: string]: number } = {};
+    const multiBrandCount = filteredMarkers.filter(m => m.isMultiBrand).length;
+    
+    // 统计品牌数量
+    filteredMarkers.forEach(marker => {
+      if (marker.isMultiBrand) {
+        // 多品牌位置：每个品牌都计数
+        marker.brand.forEach(brand => {
+          brandStats[brand] = (brandStats[brand] || 0) + 1;
+        });
+      } else {
+        // 单品牌位置
+        brandStats[marker.brand[0]] = (brandStats[marker.brand[0]] || 0) + 1;
+      }
+    });
+
+    // 添加多品牌位置的统计
+    if (multiBrandCount > 0) {
+      brandStats['Multi-brand'] = multiBrandCount;
+    }
+
+    // 初始化选择状态，但保留现有的选择状态
+    const initialSelection: ColorSelection = {};
+    Object.keys(brandStats).forEach(brand => {
+      // 如果已经存在于selectedColors中，保持其状态；否则设为true
+      initialSelection[brand] = selectedColors.hasOwnProperty(brand) 
+        ? selectedColors[brand] 
+        : true;
+    });
+    
+    // 确保"Potential"选项存在
+    initialSelection['Potential'] = selectedColors.hasOwnProperty('Potential')
+      ? selectedColors['Potential']
+      : true;
+    
+    setColorStats(brandStats);
+    
+    // 只在初始加载时设置选中状态，而不是每次更新都重置
+    if (Object.keys(selectedColors).length === 0) {
+      setSelectedColors(initialSelection);
+    }
+  }, [selectedColors]);
 
   // 加载标记点数据的函数 - 使用useCallback避免useEffect依赖警告
   const loadMarkerData = useCallback((kecamatanValue: string) => {
@@ -596,52 +599,7 @@ function App() {
           }
         }, 5000);
       });
-  }, []);
-  
-  // 更新统计数据
-  const updateStatistics = (filteredMarkers: MarkerData[]) => {
-    const brandStats: { [key: string]: number } = {};
-    const multiBrandCount = filteredMarkers.filter(m => m.isMultiBrand).length;
-    
-    // 统计品牌数量
-    filteredMarkers.forEach(marker => {
-      if (marker.isMultiBrand) {
-        // 多品牌位置：每个品牌都计数
-        marker.brand.forEach(brand => {
-          brandStats[brand] = (brandStats[brand] || 0) + 1;
-        });
-      } else {
-        // 单品牌位置
-        brandStats[marker.brand[0]] = (brandStats[marker.brand[0]] || 0) + 1;
-      }
-    });
-
-    // 添加多品牌位置的统计
-    if (multiBrandCount > 0) {
-      brandStats['Multi-brand'] = multiBrandCount;
-    }
-
-    // 初始化选择状态，但保留现有的选择状态
-    const initialSelection: ColorSelection = {};
-    Object.keys(brandStats).forEach(brand => {
-      // 如果已经存在于selectedColors中，保持其状态；否则设为true
-      initialSelection[brand] = selectedColors.hasOwnProperty(brand) 
-        ? selectedColors[brand] 
-        : true;
-    });
-    
-    // 确保"Potential"选项存在
-    initialSelection['Potential'] = selectedColors.hasOwnProperty('Potential')
-      ? selectedColors['Potential']
-      : true;
-    
-    setColorStats(brandStats);
-    
-    // 只在初始加载时设置选中状态，而不是每次更新都重置
-    if (Object.keys(selectedColors).length === 0) {
-      setSelectedColors(initialSelection);
-    }
-  };
+  }, [updateStatistics]);
 
   // 全选逻辑
   const selectAllColors = () => {
@@ -930,11 +888,6 @@ function App() {
     );
   };
 
-  // 总开关：显示/隐藏所有区域
-  const toggleRegionBoundaries = () => {
-    setShowRegionBoundaries(!showRegionBoundaries);
-  };
-
   // 渲染区域设置面板
   const renderRegionSettings = () => {
     console.log("渲染区域设置面板", regionData.length, showRegionBoundaries);
@@ -1146,20 +1099,6 @@ function App() {
                   <span className="update-badge">{dataUpdateCount}</span>
                 )}
               </button>
-
-              {/* 区域边界按钮 */}
-              {regionData.length > 0 && (
-                <button 
-                  className="control-button boundary-button" 
-                  onClick={() => {
-                    console.log("点击区域边界按钮，当前状态:", showRegionBoundaries);
-                    setShowRegionBoundaries(!showRegionBoundaries);
-                  }}
-                  title={showRegionBoundaries ? "隐藏区域边界" : "显示区域边界"}
-                >
-                  🧩
-                </button>
-              )}
 
               {/* 定位按钮 */}
               <LocationMarker />
