@@ -149,7 +149,8 @@ app.get('/markers', (req, res) => {
 // 启动服务器
 app.listen(PORT, () => {
     log(`服务器启动成功，端口: ${PORT}`);
-    log(`健康检查: http://localhost:${PORT}/`);
-    log(`Webhook端点: http://localhost:${PORT}/webhook`);
-    log(`标记查询: http://localhost:${PORT}/markers`);
+    log(`服务器运行在 Render 云平台`);
+    log(`健康检查端点: GET /`);
+    log(`Webhook端点: POST /webhook`);
+    log(`标记查询端点: GET /markers`);
 }); 
