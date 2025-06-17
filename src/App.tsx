@@ -508,15 +508,13 @@ function App() {
   const loadMarkerData = (kecamatanValue: string) => {
     setIsLoading(true);
     
-    // 直接从GitHub仓库读取CSV数据
-    const githubUrl = 'https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv';
+    // 强制只从Render服务器读取数据
+    const renderUrl = 'https://indonesia-map-feishu-integration.onrender.com/api/data/csv';
     
-    console.log('🌐 从GitHub仓库获取数据...');
+    console.log('🌐 强制从Render服务器获取数据...');
     
-    // 添加时间戳防止缓存
-    const urlWithTimestamp = `${githubUrl}?t=${Date.now()}`;
-    
-    fetch(urlWithTimestamp, {
+    // 只从Render服务器获取数据
+    fetch(renderUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -524,9 +522,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`GitHub数据获取失败: ${response.status}`);
+          throw new Error(`Render服务器响应错误: ${response.status}`);
         }
-        console.log('✅ 成功从GitHub获取数据');
+        console.log('✅ 成功从Render服务器获取数据');
         
         // 记录文件的最后修改时间
         const lastModified = response.headers.get('Last-Modified');
@@ -539,7 +537,7 @@ function App() {
         return response.text();
       })
       .then(csvText => {
-        console.log('📊 GitHub CSV数据:', csvText.substring(0, 200) + '...');
+        console.log('📊 Render CSV数据:', csvText.substring(0, 200) + '...');
         
         const lines = csvText.split('\n');
         const brandStats: { [key: string]: number } = {};
@@ -648,8 +646,8 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('从GitHub加载数据出错:', err);
-        setError(`无法从GitHub加载数据: ${err.message}`);
+        console.error('从Render服务器加载数据出错:', err);
+        setError(`无法从Render服务器加载数据: ${err.message}`);
         setIsLoading(false);
         
         // 显示错误提示

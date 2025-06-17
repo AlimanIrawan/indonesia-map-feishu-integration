@@ -1,13 +1,12 @@
-# 依赖
+# 依赖包
 node_modules/
-/.pnp
-.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# 测试
-/coverage
-
-# 生产构建
-/build
+# 构建输出
+dist/
+build/
 
 # 环境变量
 .env
@@ -16,28 +15,39 @@ node_modules/
 .env.test.local
 .env.production.local
 
-# 日志
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# 日志文件
+*.log
+logs/
 
-# 编辑器
-.vscode/
-.idea/
-
-# 操作系统
+# 系统文件
 .DS_Store
 Thumbs.db
+
+# IDE/编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # 临时文件
 *.tmp
 *.temp
 
-# 备份文件
-public/markers_from_server.csv
+# Python虚拟环境（如果使用）
+venv/
+env/
+__pycache__/
+*.pyc
 
-# Netlify
-.netlify/
+# 敏感数据
+*.key
+*.pem
+secrets/
 
-# Git
-*.orig
+# 测试覆盖率
+coverage/
+.nyc_output
+
+# Parcel缓存
+.cache/
+.parcel-cache/
