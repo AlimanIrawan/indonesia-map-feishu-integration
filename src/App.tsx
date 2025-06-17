@@ -556,7 +556,7 @@ function App() {
               isMultiBrand,
               shopCode: shopCode,
               kecamatan: kecamatan || '',
-              isPotential: potensi.toLowerCase().trim() === 'potensi' // 如果potensi列为"potensi"则设为true
+              isPotential: (potensi || '').toLowerCase().trim() === 'potensi' // 安全处理potensi字段
             };
             
             console.log("✅ 成功创建标记点对象:", result);
@@ -580,7 +580,7 @@ function App() {
         let filteredMarkers = parsedMarkers;
         if (kecamatanValue && kecamatanValue !== 'One Meter') {
           filteredMarkers = parsedMarkers.filter(marker => 
-            marker.kecamatan.toLowerCase() === kecamatanValue.toLowerCase()
+            (marker.kecamatan || '').toLowerCase() === kecamatanValue.toLowerCase()
           );
         }
         
@@ -661,7 +661,7 @@ function App() {
     const filteredMarkers = originalMarkers.filter(marker => {
       // 首先检查kecamatan筛选
       if (kecamatanFilter && kecamatanFilter !== 'One Meter' && 
-          marker.kecamatan.toLowerCase() !== kecamatanFilter.toLowerCase()) {
+          (marker.kecamatan || '').toLowerCase() !== kecamatanFilter.toLowerCase()) {
         return false;
       }
       
@@ -774,7 +774,7 @@ function App() {
               <span className="brand-name">有潜力店铺</span>
               <span className="brand-count">
                 {originalMarkers.filter(m => m.isPotential && 
-                  (kecamatanFilter === 'One Meter' || m.kecamatan.toLowerCase() === kecamatanFilter.toLowerCase())).length}
+                  (kecamatanFilter === 'One Meter' || (m.kecamatan || '').toLowerCase() === kecamatanFilter.toLowerCase())).length}
               </span>
             </label>
           </div>
