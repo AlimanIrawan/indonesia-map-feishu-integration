@@ -1,0 +1,106 @@
+=== 飞书自动化脚本配置指南 ===
+
+第一步：创建GitHub Personal Access Token
+1. 访问：https://github.com/settings/tokens
+2. 点击"Generate new token (classic)"
+3. 权限选择：repo (完整仓库访问权限)
+4. 复制生成的token（格式：ghp_xxxxxxxxxxxxxxxxxxxx）
+
+第二步：在飞书多维表格中配置自动化
+1. 打开您的飞书多维表格
+2. 点击右上角"自动化"按钮
+3. 创建新的自动化流程：
+   - 触发器：当记录被创建时
+   - 执行动作：运行自定义脚本
+
+第三步：粘贴以下脚本代码到飞书自动化脚本编辑器中：
+
+```javascript
+async function main(event) {
+    try {
+        // 获取触发的记录数据
+        const record = event.record;
+        console.log('收到记录更新:', record);
+        
+        // 提取字段数据（请根据您的实际字段名称调整）
+        const data = {
+            shop_code: record.fields.shop_code || record.fields.outlet_code || '',
+            latitude: record.fields.latitude || record.fields.纬度 || '',
+            longitude: record.fields.longitude || record.fields.经度 || '',
+            outlet_name: record.fields.outlet_name || record.fields.nama_pemilik || record.fields.店铺名称 || '',
+            brand: record.fields.brand || record.fields.品牌 || '',
+            kecamatan: record.fields.kecamatan || record.fields.区域 || '',
+            potensi: record.fields.potensi || record.fields.潜力 || ''
+        };
+        
+        // 数据验证
+        if (!data.shop_code || !data.latitude || !data.longitude) {
+            console.error('❌ 数据验证失败：缺少必要字段');
+            console.error('shop_code:', data.shop_code);
+            console.error('latitude:', data.latitude);
+            console.error('longitude:', data.longitude);
+            return;
+        }
+        
+        console.log('✅ 数据验证通过:', data);
+        
+        // 替换为您的GitHub Token
+        const GITHUB_TOKEN = 'ghp_替换为您的真实Token';
+        
+        // GitHub API调用
+        const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-app/dispatches', {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json',
+                'User-Agent': 'Feishu-Automation',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                event_type: 'feishu-data-update',
+                client_payload: data
+            })
+        });
+        
+        if (response.ok) {
+            console.log('🎉 数据推送成功！');
+            console.log('GitHub Actions将自动处理您的数据');
+        } else {
+            const errorText = await response.text();
+            console.error('❌ 推送失败:', response.status, response.statusText);
+            console.error('错误详情:', errorText);
+        }
+        
+    } catch (error) {
+        console.error('❌ 脚本执行出错:', error);
+    }
+}
+```
+
+第四步：配置说明
+1. 将上面代码中的 'ghp_替换为您的真实Token' 替换为第一步获取的GitHub Token
+2. 检查字段名称映射是否正确（根据您的表格字段调整）
+3. 保存并启用自动化脚本
+
+第五步：测试
+1. 在飞书表格中添加一条新记录
+2. 检查自动化执行日志
+3. 查看GitHub Actions是否被触发
+4. 确认CSV文件是否更新
+
+字段映射说明：
+- shop_code: 店铺代码（必填）
+- latitude: 纬度（必填）
+- longitude: 经度（必填）
+- outlet_name: 店铺名称（可选）
+- brand: 品牌（可选）
+- kecamatan: 区域（可选）
+- potensi: 潜力标记（可选）
+
+故障排除：
+1. 如果自动化失败，检查控制台日志
+2. 确认GitHub Token权限正确
+3. 验证字段名称匹配
+4. 检查网络连接
+
+完成以上配置后，您的飞书数据将自动推送到GitHub，触发Actions更新地图数据！ 

@@ -1,0 +1,44 @@
+=== 印尼地图应用 - GitHub Actions版本 ===
+
+🎯 项目简介：
+印尼冰淇淋店铺分布地图应用，支持飞书多维表格自动数据同步
+
+🚀 快速开始：
+1. 双击 "启动地图应用.sh" 启动应用
+2. 双击 "首次推送到Git.sh" 推送代码到GitHub
+3. 按照 "GitHub_Actions完整部署指南.txt" 配置飞书集成
+
+📁 主要文件：
+• src/App.tsx - 主应用代码
+• public/markers.csv - 地图数据文件
+• .github/workflows/update-feishu-data.yml - GitHub Actions工作流
+• 启动地图应用.sh - 应用启动脚本
+• 首次推送到Git.sh - Git推送脚本
+• 测试GitHub_Actions.sh - GitHub Actions测试脚本
+
+🔧 核心功能：
+• 地图显示冰淇淋店铺位置
+• 按品牌筛选和统计
+• 飞书数据自动同步
+• 响应式设计
+• 实时数据更新
+
+💰 技术方案：
+• 前端：React + TypeScript + Leaflet
+• 数据存储：GitHub仓库CSV文件
+• 自动化：GitHub Actions + 飞书自动化
+• 部署：Netlify/Vercel（免费）
+• 总成本：完全免费
+
+📊 数据流程：
+飞书表格 → 飞书自动化 → GitHub API → GitHub Actions → 更新CSV → 前端刷新
+
+🎉 优势：
+✅ 完全免费
+✅ 数据永久存储
+✅ 无服务器维护
+✅ 自动版本控制
+✅ 高可用性
+
+📞 支持：
+如有问题，请查看相关配置文件或GitHub仓库的Issues 

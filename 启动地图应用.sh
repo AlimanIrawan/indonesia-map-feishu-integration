@@ -1,52 +1,67 @@
 #!/bin/bash
 
-# 印尼地图应用启动脚本
-echo "🚀 启动印尼地图应用..."
+echo "🗺️ 启动印尼地图应用"
 
-# 检查是否在正确的目录
-if [ ! -f "package.json" ]; then
-    echo "❌ 错误：请在项目根目录运行此脚本"
-    exit 1
-fi
+# 颜色定义
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-# 激活虚拟环境（如果存在）
-if [ -d "venv" ]; then
-    echo "📦 激活虚拟环境..."
-    source venv/bin/activate
-fi
+# 进入项目目录
+cd "$(dirname "$0")"
 
-# 安装依赖
-echo "📦 安装依赖..."
-npm install
+echo -e "${BLUE}📂 当前目录: $(pwd)${NC}"
 
-# 构建项目
-echo "🔨 构建项目..."
-npm run build
-
-# 检查构建是否成功
-if [ $? -eq 0 ]; then
-    echo "✅ 构建成功！"
-    echo ""
-    echo "📋 部署说明："
-    echo "1. 将 build/ 目录部署到 Netlify"
-    echo "2. 确保 Render 服务器正在运行"
-    echo "3. 地图应用将自动从 Render 服务器读取最新数据"
-    echo ""
-    echo "🔗 数据流向："
-    echo "飞书 → Render Webhook → Render CSV → Netlify 地图应用"
-    echo ""
-    echo "📊 现在地图应用会："
-    echo "- 优先从 Render 服务器读取最新数据"
-    echo "- 每30秒自动检查数据更新"
-    echo "- 如果 Render 服务器不可用，使用本地备份数据"
+# 检查是否已安装依赖
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}📦 首次运行，正在安装依赖...${NC}"
+    npm install
     
-    # 在macOS上自动打开构建目录
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo ""
-        echo "📂 打开构建目录..."
-        open build/
+    if [ $? -ne 0 ]; then
+        echo "❌ 依赖安装失败"
+        read -p "按任意键退出..."
+        exit 1
     fi
+fi
+
+echo -e "${GREEN}🚀 启动开发服务器...${NC}"
+
+# 启动开发服务器并在后台运行
+npm start &
+NPM_PID=$!
+
+echo -e "${BLUE}⏰ 等待服务器启动...${NC}"
+
+# 等待服务器启动
+sleep 5
+
+# 检查服务器是否启动成功
+if curl -s http://localhost:3000 > /dev/null; then
+    echo -e "${GREEN}✅ 服务器启动成功！${NC}"
+    echo -e "${BLUE}🌐 正在打开浏览器...${NC}"
+    
+    # 在macOS上打开默认浏览器
+    open http://localhost:3000
+    
+    echo ""
+    echo -e "${GREEN}🎉 印尼地图应用已启动！${NC}"
+    echo -e "${BLUE}📍 应用地址: http://localhost:3000${NC}"
+    echo ""
+    echo -e "${YELLOW}💡 使用说明：${NC}"
+    echo "• 地图显示冰淇淋店铺分布"
+    echo "• 可以按品牌筛选显示"
+    echo "• 支持飞书数据自动同步"
+    echo "• 数据直接从GitHub获取"
+    echo ""
+    echo "按 Ctrl+C 停止服务器"
+    
+    # 等待用户中断
+    wait $NPM_PID
 else
-    echo "❌ 构建失败！请检查错误信息。"
-    exit 1
-fi 
+    echo "❌ 服务器启动失败"
+    kill $NPM_PID 2>/dev/null
+fi
+
+echo ""
+echo -e "${BLUE}👋 应用已停止${NC}" 

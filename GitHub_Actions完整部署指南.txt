@@ -1,0 +1,156 @@
+=== GitHub Actions + 飞书集成完整部署指南 ===
+
+🎯 目标：
+完全摆脱Render依赖，使用GitHub Actions + GitHub储存实现：
+- 飞书多维表格自动推送数据到GitHub
+- GitHub Actions自动更新CSV文件
+- 前端直接从GitHub读取数据
+- 完全免费的解决方案
+
+📋 部署步骤：
+
+第一步：GitHub仓库准备
+1. 确保你的GitHub仓库是公开的（GitHub Actions免费使用）
+2. 仓库地址：https://github.com/AlimanIrawan/indonesia-map-app
+3. 确认以下文件已存在：
+   - .github/workflows/update-feishu-data.yml（已创建）
+   - public/markers.csv（数据文件）
+
+第二步：创建GitHub Personal Access Token
+1. 访问：https://github.com/settings/tokens
+2. 点击"Generate new token (classic)"
+3. Token名称：Feishu Integration Token
+4. 权限选择：
+   ✅ repo (完整仓库访问权限)
+   ✅ workflow (工作流访问权限)
+5. 点击"Generate token"
+6. 复制生成的token（格式：ghp_xxxxxxxxxxxxxxxxxxxx）
+7. ⚠️ 注意：Token只显示一次，请妥善保存
+
+第三步：飞书自动化配置
+1. 打开飞书多维表格
+2. 点击右上角"自动化"
+3. 创建新自动化：
+   - 触发器：当记录被创建时
+   - 动作：运行自定义脚本
+
+4. 粘贴以下JavaScript代码：
+
+```javascript
+async function main(event) {
+    try {
+        // 获取记录数据
+        const record = event.record;
+        console.log('📝 收到数据:', record);
+        
+        // 提取字段（请根据实际字段名调整）
+        const data = {
+            shop_code: record.fields.shop_code || record.fields.outlet_code || '',
+            latitude: record.fields.latitude || record.fields.纬度 || '',
+            longitude: record.fields.longitude || record.fields.经度 || '',
+            outlet_name: record.fields.outlet_name || record.fields.nama_pemilik || '',
+            brand: record.fields.brand || record.fields.品牌 || '',
+            kecamatan: record.fields.kecamatan || record.fields.区域 || '',
+            potensi: record.fields.potensi || record.fields.潜力 || ''
+        };
+        
+        // 数据验证
+        if (!data.shop_code || !data.latitude || !data.longitude) {
+            console.error('❌ 数据验证失败');
+            return;
+        }
+        
+        console.log('✅ 数据验证通过');
+        
+        // GitHub Token（替换为你的真实Token）
+        const GITHUB_TOKEN = 'ghp_your_token_here';
+        
+        // 调用GitHub API
+        const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-app/dispatches', {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                event_type: 'feishu-data-update',
+                client_payload: data
+            })
+        });
+        
+        if (response.ok) {
+            console.log('🎉 GitHub Actions触发成功！');
+        } else {
+            console.error('❌ 推送失败:', response.status);
+        }
+        
+    } catch (error) {
+        console.error('❌ 脚本错误:', error);
+    }
+}
+```
+
+5. 将代码中的 'ghp_your_token_here' 替换为第二步获取的GitHub Token
+6. 根据你的表格调整字段名映射
+7. 保存并启用自动化
+
+第四步：前端配置
+1. 前端已配置为直接从GitHub读取数据
+2. 数据源：https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-app/main/public/markers.csv
+3. 无需额外配置
+
+第五步：测试验证
+1. 运行测试脚本：
+   ```bash
+   export GITHUB_TOKEN=your_token_here
+   ./测试GitHub_Actions.sh
+   ```
+
+2. 在飞书表格中添加测试数据
+3. 检查GitHub Actions执行情况：
+   https://github.com/AlimanIrawan/indonesia-map-app/actions
+
+4. 验证CSV文件是否更新：
+   https://github.com/AlimanIrawan/indonesia-map-app/blob/main/public/markers.csv
+
+📊 数据流程：
+飞书表格新增/修改记录 → 
+飞书自动化脚本 → 
+GitHub API (repository_dispatch) → 
+GitHub Actions工作流 → 
+更新public/markers.csv → 
+Git提交 → 
+前端自动读取新数据
+
+🔧 故障排除：
+
+1. 飞书自动化失败：
+   - 检查控制台日志
+   - 验证GitHub Token是否正确
+   - 确认字段名映射无误
+
+2. GitHub Actions未触发：
+   - 检查Token权限
+   - 确认仓库名称正确
+   - 查看Actions页面的错误信息
+
+3. 前端数据未更新：
+   - 清除浏览器缓存
+   - 检查GitHub上CSV文件是否更新
+   - 验证网络连接
+
+💰 成本分析：
+- GitHub Actions: 免费2000分钟/月（每次执行约30秒）
+- GitHub存储: 免费1GB（CSV文件几KB）
+- 总成本: 完全免费！
+
+🎉 优势：
+- ✅ 完全免费
+- ✅ 数据永久存储
+- ✅ 无服务器维护
+- ✅ 自动版本控制
+- ✅ 高可用性
+- ✅ 简单配置
+
+完成以上步骤后，你将拥有一个完全独立、免费、可靠的飞书到地图的数据同步系统！ 

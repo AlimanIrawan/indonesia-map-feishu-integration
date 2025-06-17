@@ -1,12 +1,12 @@
-# 依赖包
+# 依赖文件
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# 构建输出
-dist/
+# 生产构建
 build/
+dist/
 
 # 环境变量
 .env
@@ -16,38 +16,42 @@ build/
 .env.production.local
 
 # 日志文件
-*.log
 logs/
+*.log
 
-# 系统文件
+# 临时文件
 .DS_Store
 Thumbs.db
+*.tmp
+*.temp
 
-# IDE/编辑器
+# IDE配置
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# 临时文件
-*.tmp
-*.temp
-
-# Python虚拟环境（如果使用）
-venv/
-env/
-__pycache__/
-*.pyc
-
-# 敏感数据
-*.key
-*.pem
-secrets/
-
 # 测试覆盖率
 coverage/
-.nyc_output
 
-# Parcel缓存
+# 缓存文件
 .cache/
-.parcel-cache/
+.eslintcache
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 备份文件
+*.backup
+*.bak
+*.old
+
+# 敏感信息
+secrets/
+config/secrets.json
