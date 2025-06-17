@@ -11,4 +11,5 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000 
+        value: 10000
+      # GITHUB_TOKEN 需要在Render控制台手动设置 

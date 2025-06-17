@@ -19,11 +19,23 @@ app.post('/feishu-to-github', async (req, res) => {
         // 动态导入fetch
         const fetch = (await import('node-fetch')).default;
         
+        // 从环境变量获取GitHub Token
+        const githubToken = process.env.GITHUB_TOKEN;
+        
+        if (!githubToken) {
+            console.error('❌ 未设置GITHUB_TOKEN环境变量');
+            return res.status(500).json({
+                success: false,
+                error: '服务器配置错误：未设置GitHub Token',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
         // 调用GitHub API
         const response = await fetch('https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches', {
             method: 'POST',
             headers: {
-                'Authorization': 'token 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',
+                'Authorization': `token ${githubToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(req.body)
