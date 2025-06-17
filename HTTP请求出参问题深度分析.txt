@@ -1,0 +1,145 @@
+=== HTTP请求出参问题深度分析 ===
+
+🔍 **从你的截图分析到的关键信息**：
+
+📊 **运行历史分析**：
+- 看到很多"运行成功"的记录（绿色✅）
+- 但最近几次都是"运行失败"（橙色❌）
+- 错误信息：HTTP 请求出参返回格式不正确
+
+🎯 **关键发现**：
+从你的截图可以看到：
+- Token: `ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi`
+- 这是一个新的Token（与之前不同）
+- 配置看起来是正确的
+
+⚠️ **问题可能不在Token权限，而在其他地方**：
+
+=== 可能的根本原因 ===
+
+**1. GitHub API响应格式问题**：
+- 飞书期望特定的响应格式
+- GitHub API可能返回了飞书无法解析的内容
+
+**2. 网络或超时问题**：
+- API调用超时
+- 网络连接问题
+- GitHub API限制
+
+**3. 仓库状态问题**：
+- 仓库可能不存在或无法访问
+- Workflow文件可能有问题
+- Actions可能被禁用
+
+=== 深度排查方案 ===
+
+**第一步：验证仓库和API**
+让我们先确认仓库状态：
+
+```bash
+# 测试仓库是否可访问
+curl -H "Authorization: token ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi" \
+     https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration
+```
+
+**第二步：测试repository_dispatch API**
+```bash
+# 直接测试dispatch API
+curl -X POST \
+  -H "Authorization: token ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi" \
+  -H "Content-Type: application/json" \
+  https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches \
+  -d '{"event_type": "test-event"}'
+```
+
+**第三步：检查GitHub Actions状态**
+- 确认仓库启用了Actions
+- 确认有正确的workflow文件
+- 确认workflow监听repository_dispatch事件
+
+=== 飞书配置调整建议 ===
+
+**尝试1：完全删除Content-Type**
+```
+Authorization: token ghp_doszTnRkgpHkSUQflqgCNQHpr1ASoya17WPi
+```
+（不要任何其他请求头）
+
+**尝试2：修改请求体格式**
+确保JSON完全正确，没有多余字符：
+```json
+{"event_type":"feishu-data-update","client_payload":{"shop_code":"{{记录.shop_code}}"}}
+```
+
+**尝试3：简化测试**
+先用最简单的请求体测试：
+```json
+{"event_type":"test"}
+```
+
+=== 可能的GitHub仓库问题 ===
+
+**检查清单**：
+1. ✅ 仓库是否存在？
+2. ✅ 仓库是否公开？
+3. ✅ Actions是否启用？
+4. ✅ 是否有workflow文件？
+5. ✅ workflow是否监听repository_dispatch？
+
+**workflow文件示例**：
+```yaml
+name: Handle Feishu Data
+on:
+  repository_dispatch:
+    types: [feishu-data-update]
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "Received dispatch event"
+```
+
+=== 错误信息解读 ===
+
+**"HTTP 请求出参返回格式不正确"** 可能意味着：
+
+1. **GitHub API返回了非预期格式**：
+   - 可能是错误信息而不是成功响应
+   - 可能是HTML错误页面而不是JSON
+
+2. **飞书无法解析响应**：
+   - 响应包含特殊字符
+   - 响应格式不符合飞书期望
+
+3. **API调用失败**：
+   - 返回了错误状态码
+   - 返回了错误消息
+
+=== 调试建议 ===
+
+**方法1：查看详细错误**
+在飞书自动化中，点击"详情"查看完整的错误信息和响应内容。
+
+**方法2：使用Postman测试**
+用Postman直接测试GitHub API，看看实际返回什么。
+
+**方法3：检查GitHub仓库**
+直接访问：https://github.com/AlimanIrawan/indonesia-map-feishu-integration
+确认仓库状态。
+
+=== 临时解决方案 ===
+
+**如果问题持续存在**：
+1. 尝试使用不同的event_type名称
+2. 尝试更简单的client_payload
+3. 考虑使用webhook而不是repository_dispatch
+4. 检查GitHub API状态页面
+
+**下一步行动**：
+1. 首先确认GitHub仓库是否正常
+2. 测试API是否可以直接调用
+3. 检查workflow文件是否正确
+4. 如果仍有问题，可能需要联系飞书技术支持
+
+这个问题可能比Token权限更复杂，需要逐步排查每个环节。 

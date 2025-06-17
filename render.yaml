@@ -1,15 +1,14 @@
 services:
   - type: web
-    name: indonesia-map-feishu-integration
+    name: feishu-github-proxy
     env: node
     plan: free
-    buildCommand: cd feishu-webhook-server && npm install
-    startCommand: cd feishu-webhook-server && npm start
+    buildCommand: npm install
+    startCommand: node feishu-proxy-server.js
     rootDir: ./
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
-      - key: API_TOKEN
-        generateValue: true 
+        value: 10000 

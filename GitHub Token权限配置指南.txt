@@ -1,0 +1,137 @@
+=== GitHub Token权限配置指南 ===
+
+🎯 **问题确认**：
+你的飞书自动化仍然报错，很可能是GitHub Token权限不足导致的！
+
+🔍 **根据GitHub官方文档，触发repository_dispatch需要的权限**：
+
+=== 第一步：Personal Access Token (PAT) 权限 ===
+
+**必需权限（经典PAT）**：
+✅ **repo** - 完整仓库权限（包含contents、actions等）
+✅ **workflow** - 工作流权限（用于触发Actions）
+
+**详细权限说明**：
+- `repo` 权限包含：
+  - `repo:status` - 访问提交状态
+  - `repo_deployment` - 访问部署状态
+  - `public_repo` - 访问公共仓库
+  - `repo:invite` - 访问仓库邀请
+  - `security_events` - 访问安全事件
+
+- `workflow` 权限：
+  - 专门用于触发GitHub Actions工作流
+  - 这是触发repository_dispatch的关键权限！
+
+=== 第二步：Fine-grained PAT 权限（新版本）===
+
+如果使用Fine-grained Personal Access Token：
+
+**必需权限**：
+✅ **contents: read & write**
+✅ **metadata: read** (自动选择)
+✅ **actions: write** (用于触发workflow)
+
+=== 第三步：检查你的Token权限 ===
+
+**检查方法**：
+1. 访问：https://github.com/settings/tokens
+2. 找到你的Token
+3. 检查权限范围
+
+**当前Token权限检查**：
+根据你的截图，Token是：`ghp_EdNHExOqlF...`
+
+**可能的问题**：
+❌ Token缺少 `workflow` 权限
+❌ Token缺少 `actions:write` 权限
+❌ Token权限范围不足
+
+=== 第四步：重新创建Token ===
+
+**经典PAT配置**：
+1. 访问：https://github.com/settings/tokens
+2. 点击"Generate new token (classic)"
+3. 选择权限：
+   ✅ repo (完整权限)
+   ✅ workflow
+   ✅ admin:repo_hook (如果需要)
+
+**Fine-grained PAT配置**：
+1. 访问：https://github.com/settings/personal-access-tokens/fine-grained
+2. 创建新Token
+3. 选择仓库：AlimanIrawan/indonesia-map-feishu-integration
+4. 设置权限：
+   ✅ Contents: Read and write
+   ✅ Metadata: Read
+   ✅ Actions: Write
+
+=== 第五步：更新飞书配置 ===
+
+**使用新Token**：
+```
+Authorization: token ghp_你的新Token
+```
+
+**重要提醒**：
+- Token格式：`ghp_` 开头，40个字符
+- 确保Token没有过期
+- 确保Token有正确的仓库访问权限
+
+=== 第六步：验证权限 ===
+
+**测试Token权限**：
+可以使用以下curl命令测试：
+
+```bash
+curl -H "Authorization: token ghp_你的Token" \
+     -H "Accept: application/vnd.github.v3+json" \
+     https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration
+```
+
+**成功响应**：应该返回仓库信息，不应该有权限错误
+
+=== 第七步：常见错误排查 ===
+
+**403 Forbidden错误**：
+- Token权限不足
+- Token已过期
+- 仓库访问权限问题
+
+**401 Unauthorized错误**：
+- Token格式错误
+- Token无效或已删除
+
+**404 Not Found错误**：
+- 仓库名称错误
+- Token没有访问该仓库的权限
+
+=== 第八步：最佳实践 ===
+
+**安全建议**：
+1. 使用最小权限原则
+2. 定期轮换Token
+3. 不要在代码中硬编码Token
+4. 使用环境变量或密钥管理
+
+**权限最小化**：
+如果只需要触发workflow，可以只给：
+- `public_repo` (如果是公共仓库)
+- `workflow`
+
+=== 总结 ===
+
+**最可能的问题**：
+你的Token缺少 `workflow` 权限！
+
+**解决方案**：
+1. 重新创建Token，确保包含 `repo` 和 `workflow` 权限
+2. 在飞书中更新Token
+3. 测试自动化
+
+**预期结果**：
+- 飞书自动化成功执行
+- GitHub Actions被触发
+- CSV文件正常更新
+
+根据GitHub官方文档，`workflow` 权限是触发repository_dispatch的关键！ 

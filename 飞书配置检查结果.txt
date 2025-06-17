@@ -1,0 +1,67 @@
+=== 飞书配置检查结果 ===
+
+📸 根据你的截图分析：
+
+🎯 **当前配置状态**：
+✅ 请求方法：POST - 正确
+✅ 请求地址：https://api.github.com/repos/AlimanIrawan/indonesia-map-feishu-integration/dispatches - 正确
+✅ 请求头：只有 Authorization: token ghp_EdNHExOqlFXfTqRoqd5cZqCC... - 正确！
+
+🔍 **重要发现**：
+✅ **你已经正确删除了多余的请求头！**
+✅ **只保留了 Authorization 请求头**
+✅ **没有看到 Content-Type、Accept、User-Agent 等可能导致问题的请求头**
+
+📋 **请求体检查**：
+从截图看到的请求体格式：
+```json
+{
+  "event_type": "feishu-data-update", 
+  "client_payload": {
+    "shop_code": "{{第1步满足条件... At Outlet Code}}",
+    "latitude": "{{第1步满足条件... 5, latitude}}",
+    "longitude": "{{第1步满足条件... 5, longitude}}",
+    "outlet_name": "{{第1步满足条件... At Nama Pemilik}}"
+  }
+}
+```
+
+✅ **JSON格式正确**
+✅ **event_type 正确**
+✅ **字段映射看起来正确**
+
+🎉 **结论**：
+**你的配置看起来是正确的！**
+
+根据飞书官方文档的解决方案，你已经：
+1. ✅ 删除了多余的请求头
+2. ✅ 只保留了必要的 Authorization
+3. ✅ 请求体格式正确
+4. ✅ URL 和方法正确
+
+🔧 **如果仍然出现"HTTP请求出参返回格式不正确"错误**：
+
+**可能的原因和解决方案**：
+
+1. **Token权限问题**：
+   - 确认Token有 `repo` 权限
+   - 确认Token有 `actions:write` 权限
+
+2. **仓库设置问题**：
+   - 确认仓库存在 GitHub Actions workflow
+   - 确认workflow文件中有 `repository_dispatch` 触发器
+
+3. **尝试更简化的配置**：
+   - 甚至可以完全删除 Content-Type 请求头
+   - 只保留 Authorization
+
+4. **检查响应**：
+   - 查看飞书自动化的详细执行日志
+   - 看看具体的错误信息
+
+**建议下一步**：
+1. 先测试这个配置
+2. 如果还有错误，查看详细的错误日志
+3. 可能需要检查GitHub仓库的workflow配置
+
+你的配置基本上符合飞书官方文档的要求！

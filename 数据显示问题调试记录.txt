@@ -10,6 +10,7 @@
 2. CSV文件格式存在引号和编码问题
 3. CORS跨域访问限制（浏览器安全策略）
 4. Netlify重定向顺序问题
+5. Netlify重定向配置始终无法正常工作
 
 解决步骤：
 
@@ -34,6 +35,23 @@
 - 恢复使用Netlify代理访问数据
 - 提交：f578b87
 
+第五步：添加详细调试输出
+- 发现应用"成功解析 0 条数据记录"
+- 添加完整的CSV解析调试信息
+- 提交：5aa33fa
+
+第六步：尝试不同的重定向语法
+- 使用通配符和splat语法
+- 添加force=true和内联CORS头部
+- 提交：a74ea6e
+- 结果：仍然返回HTML而不是CSV
+
+第七步：使用Netlify Function（当前方案）
+- 创建serverless函数 /.netlify/functions/markers
+- 在服务器端直接获取GitHub数据
+- 自动处理CORS和错误
+- 提交：3de328a
+
 测试数据：
 - 区域名称：测试区域
 - 密码：omg20250501
@@ -41,13 +59,17 @@
 - 门店：测试门店
 - 品牌：测试品牌
 
-当前状态：等待Netlify重新部署
-最新提交：f578b87
+当前状态：等待Netlify Function部署
+最新提交：3de328a
 
 测试步骤：
-1. 等待1-2分钟让Netlify重新部署
-2. 访问 https://locationmarker.netlify.app
+1. 等待2-3分钟让Netlify重新部署Functions
+2. 硬刷新页面
 3. 输入区域名称：测试区域，密码：omg20250501
 4. 查看是否显示测试标记点
+
+技术方案对比：
+- ❌ Netlify重定向：配置复杂，经常失效
+- ✅ Netlify Function：服务器端代理，更可靠
 
 如果仍有问题，请提供浏览器控制台的完整输出信息。 
