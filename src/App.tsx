@@ -267,12 +267,12 @@ function App() {
   
   // 加载可用区域名称
   useEffect(() => {
-    // 通过Netlify代理访问数据
-    const proxyUrl = '/api/markers.csv';
+    // 通过Netlify Function访问数据
+    const functionUrl = '/.netlify/functions/markers';
     
-    console.log('🌐 通过Netlify代理加载区域名称...');
+    console.log('🌐 通过Netlify Function加载区域名称...');
     
-    fetch(proxyUrl, {
+    fetch(functionUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -280,9 +280,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`通过Netlify代理访问数据失败: ${response.status}`);
+          throw new Error(`通过Netlify Function访问数据失败: ${response.status}`);
         }
-        console.log('✅ 成功通过Netlify代理获取区域数据');
+        console.log('✅ 成功通过Netlify Function获取区域数据');
         return response.text();
       })
       .then(csvText => {
@@ -339,7 +339,7 @@ function App() {
         console.log(`✅ 成功加载 ${kecamatans.size} 个区域名称`);
       })
       .catch(err => {
-        console.error('通过Netlify代理加载区域数据出错:', err);
+        console.error('通过Netlify Function加载区域数据出错:', err);
         // 如果失败，至少提供"One Meter"选项
         setAvailableKecamatans(["One Meter"]);
       });
@@ -434,13 +434,13 @@ function App() {
   const loadMarkerData = useCallback((kecamatanValue: string) => {
     setIsLoading(true);
     
-    // 通过Netlify代理访问数据
-    const proxyUrl = '/api/markers.csv';
+    // 通过Netlify Function访问数据
+    const functionUrl = '/.netlify/functions/markers';
     
-    console.log('🌐 通过Netlify代理获取数据...');
+    console.log('🌐 通过Netlify Function获取数据...');
     
     // 从Netlify获取数据
-    fetch(proxyUrl, {
+    fetch(functionUrl, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache'
@@ -448,9 +448,9 @@ function App() {
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`通过Netlify代理访问数据失败: ${response.status}`);
+          throw new Error(`通过Netlify Function访问数据失败: ${response.status}`);
         }
-        console.log('✅ 成功通过Netlify代理获取数据');
+        console.log('✅ 成功通过Netlify Function获取数据');
         
         // 记录文件的最后修改时间
         const lastModified = response.headers.get('Last-Modified');
@@ -592,8 +592,8 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('通过Netlify代理加载数据出错:', err);
-        setError(`无法通过Netlify代理加载数据: ${err.message}`);
+        console.error('通过Netlify Function加载数据出错:', err);
+        setError(`无法通过Netlify Function加载数据: ${err.message}`);
         setIsLoading(false);
         
         // 显示错误提示
@@ -958,12 +958,12 @@ function App() {
 
     const checkForUpdates = async () => {
       try {
-        // 通过Netlify代理检查更新
-        const proxyUrl = '/api/markers.csv';
+        // 通过Netlify Function检查更新
+        const functionUrl = '/.netlify/functions/markers';
         
-        console.log('🔍 通过Netlify代理检查数据更新...');
+        console.log('🔍 通过Netlify Function检查数据更新...');
         
-        const response = await fetch(proxyUrl, {
+        const response = await fetch(functionUrl, {
           method: 'HEAD',
           cache: 'no-cache',
           headers: {
