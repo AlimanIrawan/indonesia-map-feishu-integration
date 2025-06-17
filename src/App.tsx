@@ -472,6 +472,8 @@ function App() {
         const parsedMarkers: MarkerData[] = lines.slice(1)
           .filter(line => line.trim() !== '')
           .map(line => {
+            console.log("🔍 正在解析CSV行:", line);
+            
             // 使用更健壮的CSV解析逻辑，处理带引号的字段
 
             // 预处理CSV行，处理潜在的引号问题
@@ -499,16 +501,22 @@ function App() {
               field.replace(/__COMMA__/g, ',').replace(/^"(.+)"$/, '$1').trim()
             );
 
+            console.log("📊 解析后的字段:", fields);
+            console.log("📊 字段数量:", fields.length);
+
             const [rawShopCode, latitude, longitude, outletName, brandField, kecamatan, potensi] = fields;
             
-            // 调试输出
-            console.log("原始CSV中的shop_code:", rawShopCode);
+            console.log("🔍 各字段值:");
+            console.log("  - rawShopCode:", rawShopCode);
+            console.log("  - latitude:", latitude);
+            console.log("  - longitude:", longitude);
+            console.log("  - outletName:", outletName);
+            console.log("  - brandField:", brandField);
+            console.log("  - kecamatan:", kecamatan);
+            console.log("  - potensi:", potensi);
 
             // 确保shop_code是完整的字符串，扩展到12位
             const shopCode = rawShopCode ? ensureShopCodeLength(rawShopCode.trim()) : '';
-            
-            // 调试输出处理后的shop_code
-            console.log("处理后的shop_code:", shopCode);
 
             // 处理多品牌情况
             const brandsText = brandField || '';
@@ -518,6 +526,8 @@ function App() {
               .map(b => b.trim())
               .filter(b => b !== '');
 
+            console.log("🏷️ 处理后的品牌:", brands);
+
             const isMultiBrand = brands.length > 1;
             
             // 如果是多品牌位置，记录品牌组合
@@ -526,12 +536,18 @@ function App() {
             }
             
             // 检查字段有效性
+            console.log("📍 坐标检查:");
+            console.log("  - parseFloat(latitude):", parseFloat(latitude));
+            console.log("  - parseFloat(longitude):", parseFloat(longitude));
+            console.log("  - isNaN(parseFloat(latitude)):", isNaN(parseFloat(latitude)));
+            console.log("  - isNaN(parseFloat(longitude)):", isNaN(parseFloat(longitude)));
+            
             if (isNaN(parseFloat(latitude)) || isNaN(parseFloat(longitude))) {
-              console.warn(`跳过无效坐标: ${latitude}, ${longitude}`);
+              console.warn(`❌ 跳过无效坐标: ${latitude}, ${longitude}`);
               return null;
             }
             
-            return {
+            const result = {
               latitude: parseFloat(latitude),
               longitude: parseFloat(longitude),
               outletName: outletName || '未命名位置',
@@ -542,13 +558,18 @@ function App() {
               kecamatan: kecamatan || '',
               isPotential: potensi.toLowerCase().trim() === 'potensi' // 如果potensi列为"potensi"则设为true
             };
+            
+            console.log("✅ 成功创建标记点对象:", result);
+            return result;
           })
           // 一次性过滤掉null值和无效坐标
-          .filter((marker): marker is MarkerData => 
-            marker !== null && 
-            !isNaN(marker.latitude) && 
-            !isNaN(marker.longitude)
-          );
+          .filter((marker): marker is MarkerData => {
+            const isValid = marker !== null && 
+                           !isNaN(marker.latitude) && 
+                           !isNaN(marker.longitude);
+            console.log("🔍 过滤检查:", marker, "有效:", isValid);
+            return isValid;
+          });
 
         console.log(`✅ 成功解析 ${parsedMarkers.length} 条数据记录`);
 
