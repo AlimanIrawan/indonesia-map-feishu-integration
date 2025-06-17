@@ -3,23 +3,13 @@
   command = "npm run build"
 
 [[redirects]]
-  from = "/api/markers.csv"
-  to = "https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/markers.csv"
+  from = "/api/*"
+  to = "https://raw.githubusercontent.com/AlimanIrawan/indonesia-map-feishu-integration/main/public/:splat"
   status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
-
-[[headers]]
-  for = "/api/markers.csv"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Content-Type = "text/csv"
-
-[[headers]]
-  for = "/markers.csv"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Content-Type = "text/csv" 
+  status = 200 
