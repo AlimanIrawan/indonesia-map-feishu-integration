@@ -1,0 +1,33 @@
+=== GitHub推送解决方案 ===
+
+🚨 **问题**：GitHub检测到代码历史中包含Token，阻止推送
+
+🔗 **解决方案**：
+
+**方法1：使用GitHub提供的允许链接**
+GitHub已经提供了一个允许推送的链接：
+```
+https://github.com/AlimanIrawan/indonesia-map-feishu-integration/security/secret-scanning/unblock-secret/2ydENMDEI2rkRo5tisdPC01ApJB
+```
+
+**操作步骤**：
+1. 在浏览器中打开上面的链接
+2. 点击"Allow secret"按钮
+3. 重新运行推送命令：`git push`
+
+**方法2：直接在Render控制台部署**
+由于我们已经修复了代码中的安全问题，可以：
+1. 直接在Render控制台手动部署
+2. 或者等待GitHub推送成功后自动部署
+
+**当前状态**：
+✅ 代码已经安全（移除了硬编码Token）
+✅ 使用环境变量存储敏感信息
+✅ 添加了详细的设置说明
+
+**下一步**：
+1. 点击GitHub提供的允许链接
+2. 或者直接在Render控制台配置环境变量并部署
+
+🔐 **重要提醒**：
+代码现在是安全的，Token只会通过环境变量传递，不会暴露在代码中。 

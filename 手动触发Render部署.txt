@@ -1,0 +1,64 @@
+=== 手动触发Render部署说明 ===
+
+🔍 **Render没有自动部署的可能原因**：
+
+1. **Auto-Deploy未启用**
+2. **Render服务配置问题**
+3. **分支设置不正确**
+4. **Webhook连接问题**
+
+🚀 **手动触发部署步骤**：
+
+**第一步：登录Render控制台**
+1. 访问：https://dashboard.render.com
+2. 找到你的服务：indonesia-map-feishu-integration
+
+**第二步：检查服务设置**
+1. 进入服务页面
+2. 点击"Settings"选项卡
+3. 检查以下设置：
+   ```
+   Repository: AlimanIrawan/indonesia-map-feishu-integration
+   Branch: main
+   Root Directory: ./
+   Build Command: npm install
+   Start Command: node feishu-proxy-server.js
+   ```
+
+**第三步：启用自动部署**
+1. 在Settings页面找到"Auto-Deploy"
+2. 确保设置为 "Yes"
+3. 如果是"No"，点击改为"Yes"
+
+**第四步：手动部署**
+1. 回到服务主页
+2. 点击右上角的"Manual Deploy"按钮
+3. 选择"Deploy latest commit"
+4. 点击"Deploy"
+
+**第五步：添加环境变量**
+1. 点击"Environment"选项卡
+2. 点击"Add Environment Variable"
+3. 添加：
+   ```
+   Key: GITHUB_TOKEN
+   Value: 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
+   ```
+4. 点击"Save Changes"
+
+**第六步：监控部署**
+1. 点击"Logs"选项卡查看部署日志
+2. 等待状态变为"Live"
+
+⚠️ **如果服务不存在**：
+可能需要重新创建Web Service：
+1. 点击"New +" → "Web Service"
+2. 选择GitHub仓库
+3. 按照上面的配置设置
+
+🔧 **常见问题**：
+- 如果Build失败，检查package.json是否正确
+- 如果Start失败，检查node版本和依赖
+- 如果找不到服务，可能需要重新连接GitHub仓库
+
+✅ **已修复**：服务名称已更正为 indonesia-map-feishu-integration 

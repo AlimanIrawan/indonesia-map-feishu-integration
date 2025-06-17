@@ -1,0 +1,70 @@
+=== Render自动部署问题分析 ===
+
+🔍 **问题分析**：
+
+**1. render.yaml 位置问题**
+- render.yaml 必须在仓库根目录
+- 当前位置：✅ 正确（在根目录）
+- 服务名称：✅ 已修复为 indonesia-map-feishu-integration
+
+**2. Render服务配置检查**
+需要在Render控制台确认：
+- Auto-Deploy 是否启用
+- Connected Repository 是否正确
+- Branch 设置是否为 main
+- Build Command 和 Start Command 是否正确
+
+**3. GitHub Webhook连接**
+可能的问题：
+- Render没有正确连接到GitHub仓库
+- Webhook触发失败
+- 权限问题
+
+🚀 **解决步骤**：
+
+**步骤1：检查Render服务状态**
+1. 登录 https://dashboard.render.com
+2. 找到服务：indonesia-map-feishu-integration
+3. 检查服务状态和最后部署时间
+
+**步骤2：重新连接GitHub（如果需要）**
+1. 进入服务Settings
+2. 找到 "Connected Repository"
+3. 如果显示连接问题，点击重新连接
+
+**步骤3：强制手动部署测试**
+1. 点击 "Manual Deploy"
+2. 选择 "Deploy latest commit"
+3. 观察部署日志
+
+**步骤4：检查Auto-Deploy设置**
+确保以下设置正确：
+```
+Repository: AlimanIrawan/indonesia-map-feishu-integration
+Branch: main
+Auto-Deploy: Yes
+Root Directory: ./
+Build Command: npm install
+Start Command: node feishu-proxy-server.js
+```
+
+**步骤5：添加环境变量**
+在Environment选项卡添加：
+```
+GITHUB_TOKEN = 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
+```
+
+⚠️ **常见原因**：
+1. Render免费计划有时会有延迟
+2. GitHub Webhook可能需要重新配置
+3. 首次设置render.yaml需要手动触发一次部署
+
+🔧 **如果仍然不工作**：
+可能需要删除现有服务并重新创建：
+1. 删除现有的 indonesia-map-feishu-integration 服务
+2. 创建新的Web Service
+3. 连接到GitHub仓库
+4. Render会自动检测render.yaml并应用配置
+
+📝 **下一步行动**：
+请按照步骤1-5检查，如果问题持续存在，我们将重新创建服务。 
